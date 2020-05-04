@@ -1,0 +1,50 @@
+package aleksey.vasiliev.bullfinchmail.view
+
+import aleksey.vasiliev.bullfinchmail.R
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.askForPermissions
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
+import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.userNameIsCorrect
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.registration.*
+import kotlin.concurrent.thread
+
+class Registration : AppCompatActivity(), Normalizable {
+    private val registrationLogic = RegistrationLogic()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.registration)
+        normalizeFont(this, registration_root)
+        askForPermissions(applicationContext, this)
+    }
+
+    fun signUp(view: View) {
+        val login = registaration_login.text.toString()
+        val password = registaration_password.text.toString()
+        val userName = registaration_username.text.toString()
+        if (!(registrationLogic.checkLoginAndPassword(applicationContext, login, password) &&
+                    checkIfConnectionIsAvailable(applicationContext) &&
+                    userNameIsCorrect(applicationContext, userName))) return
+        var loginAndPasswordExchangeIndicator = false
+        thread {
+            val helper = registrationLogic.exchangeKeysWithServer()
+            if (helper) {
+                loginAndPasswordExchangeIndicator = registrationLogic.signingUp(login, password, userName)
+                registrationLogic.closeClientSocket()
+            }
+        }.join()
+        if (!loginAndPasswordExchangeIndicator) {
+            Toast.makeText(this, "Either login is already in use, or connection was unavailable. Try again.", Toast.LENGTH_LONG).show()
+            return
+        }
+        Toast.makeText(this, "You were signed up! Congratulations!", Toast.LENGTH_LONG).show()
+        registrationLogic.saveLocalData(this, login, password, userName)
+        startActivity(Intent(this, Profile::class.java))
+    }
+}
