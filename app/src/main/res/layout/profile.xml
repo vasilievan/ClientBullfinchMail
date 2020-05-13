@@ -6,6 +6,7 @@
     android:id="@+id/profile_container"
     android:background="@drawable/gradient_background_splashscreen">
     <LinearLayout
+        android:id="@+id/container_for_conversations"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -45,5 +46,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
+        <TextView
+            android:text="Conversations"
+            android:layout_margin="15sp"
+            android:textSize="25sp"
+            android:textColor="@color/text_color"
+            android:gravity="start"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 </ScrollView>

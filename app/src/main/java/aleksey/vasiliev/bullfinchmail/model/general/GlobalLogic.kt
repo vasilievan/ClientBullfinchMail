@@ -18,7 +18,6 @@ import java.io.IOException
 import java.io.OutputStream
 import java.net.Socket
 import java.security.KeyPairGenerator
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
 import javax.crypto.Cipher
@@ -31,12 +30,18 @@ object GlobalLogic {
     fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, data: ByteArray, clientSocket: Socket?): Boolean {
         val cipheredLogin = cipher.doFinal(login.makeByteArray())
         sendSomethingToServer(writer!!, cipheredLogin)
-        val ifLoginIsCorrect = readNext(data, writer, clientSocket).makeString()
-        if (ifLoginIsCorrect != "Login is correct.") return false
+        val ifLoginIsCorrect = readNext(data, clientSocket).makeString()
+        if (ifLoginIsCorrect != "Login is correct.") {
+            closeClientSocket(writer, clientSocket)
+            return false
+        }
         val cipheredPassword = cipher.doFinal(password.makeByteArray())
         sendSomethingToServer(writer, cipheredPassword)
-        val ifPasswordIsCorrect = readNext(data, writer, clientSocket).makeString()
-        if (ifPasswordIsCorrect != "Password is correct.") return false
+        val ifPasswordIsCorrect = readNext(data, clientSocket).makeString()
+        if (ifPasswordIsCorrect != "Password is correct.") {
+            closeClientSocket(writer, clientSocket)
+            return false
+        }
         return true
     }
 
@@ -68,8 +73,7 @@ object GlobalLogic {
 
     private fun generateRequestCode(): Int = (0..65535).random()
 
-    private fun closeClientSocket(writer: OutputStream?, clientSocket: Socket?) {
-        clientSocket?.getInputStream()?.close()
+    fun closeClientSocket(writer: OutputStream?, clientSocket: Socket?) {
         writer?.close()
         clientSocket?.close()
     }
@@ -79,19 +83,13 @@ object GlobalLogic {
         writer?.flush()
     }
 
-    fun readNext(data: ByteArray, writer: OutputStream?, clientSocket: Socket?): ByteArray {
-        val beginningTime = Date().time
+    fun readNext(data: ByteArray, clientSocket: Socket?): ByteArray {
         while (true) {
-            if (Date().time - beginningTime > 1000) {
-                closeClientSocket(writer, clientSocket)
-                break
-            }
             try {
                 val count = clientSocket!!.getInputStream().read(data, 0, data.size)
                 if (count > 0) {
                     return data.copyOfRange(0, count)
                 } else if (count == -1) {
-                    closeClientSocket(writer, clientSocket)
                     break
                 }
             } catch (e: IOException) {
@@ -114,15 +112,14 @@ object GlobalLogic {
             jsonArray.put(element)
         }
         jsonObject.put(passwordType, jsonArray)
-        jsonObject.put("date", todaysDate())
         return jsonObject.toString()
     }
 
-    private fun todaysDate(): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        return "$year.$month.$day"
+    fun saveExtras(friendsLogin: String, friendsUsername: String) {
+        val storage = File("$MAIN_DIR/$friendsLogin/extras.json")
+        if (!storage.exists()) storage.createNewFile()
+        val jsonObject = JSONObject()
+        jsonObject.put("friendsUsername", friendsUsername)
+        storage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
     }
 }

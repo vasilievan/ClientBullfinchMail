@@ -5,6 +5,8 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.askForPermission
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.checkLoginAndPassword
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.saveLocalData
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.userNameIsCorrect
 import android.content.Intent
 import android.os.Bundle
@@ -14,9 +16,8 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.registration.*
 import kotlin.concurrent.thread
 
+// everything's fine
 class Registration : AppCompatActivity(), Normalizable {
-    private val registrationLogic = RegistrationLogic()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.registration)
@@ -28,15 +29,15 @@ class Registration : AppCompatActivity(), Normalizable {
         val login = registaration_login.text.toString()
         val password = registaration_password.text.toString()
         val userName = registaration_username.text.toString()
-        if (!(registrationLogic.checkLoginAndPassword(applicationContext, login, password) &&
-                    checkIfConnectionIsAvailable(applicationContext) &&
+        if (checkIfConnectionIsAvailable(applicationContext) &&
+            !(checkLoginAndPassword(applicationContext, login, password) &&
                     userNameIsCorrect(applicationContext, userName))) return
         var loginAndPasswordExchangeIndicator = false
         thread {
+            val registrationLogic = RegistrationLogic()
             val helper = registrationLogic.exchangeKeysWithServer()
             if (helper) {
                 loginAndPasswordExchangeIndicator = registrationLogic.signingUp(login, password, userName)
-                registrationLogic.closeClientSocket()
             }
         }.join()
         if (!loginAndPasswordExchangeIndicator) {
@@ -44,7 +45,7 @@ class Registration : AppCompatActivity(), Normalizable {
             return
         }
         Toast.makeText(this, "You were signed up! Congratulations!", Toast.LENGTH_LONG).show()
-        registrationLogic.saveLocalData(this, login, password, userName)
+        saveLocalData(this, login, password, userName)
         startActivity(Intent(this, Profile::class.java))
     }
 }

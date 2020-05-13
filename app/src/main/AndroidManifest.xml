@@ -23,6 +23,7 @@
         <activity android:name=".view.Registration" android:screenOrientation="portrait"/>
         <activity android:name=".view.Profile" android:screenOrientation="portrait"/>
         <activity android:name=".view.Conversation" android:screenOrientation="portrait"/>
+        <service android:name=".model.updates.UpdatesChecker"/>
     </application>
 
 </manifest>
