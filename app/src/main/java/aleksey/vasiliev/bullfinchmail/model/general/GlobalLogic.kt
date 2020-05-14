@@ -24,7 +24,6 @@ import javax.crypto.Cipher
 import java.util.Calendar
 
 object GlobalLogic {
-    val keyGen: KeyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORIGM)
     val secureRandom = SecureRandom()
 
     fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, data: ByteArray, clientSocket: Socket?): Boolean {
@@ -99,7 +98,7 @@ object GlobalLogic {
     }
 
     fun saveKey(friendsLogin: String, passwordType: String, key: ByteArray) {
-        File("$MAIN_DIR/$friendsLogin").mkdirs()
+        File("$MAIN_DIR/$friendsLogin/messages").mkdirs()
         val storage = File("$MAIN_DIR/$friendsLogin/$passwordType.json")
         if (!storage.exists()) storage.createNewFile()
         storage.writeText(createJSONKey(key, passwordType), DEFAULT_CHARSET)
@@ -121,5 +120,9 @@ object GlobalLogic {
         val jsonObject = JSONObject()
         jsonObject.put("friendsUsername", friendsUsername)
         storage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+    }
+
+    fun saveMessage(login: String, message: String) {
+        TODO()
     }
 }

@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.registration.*
 import kotlin.concurrent.thread
 
-// everything's fine
 class Registration : AppCompatActivity(), Normalizable {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

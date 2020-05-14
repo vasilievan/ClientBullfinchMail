@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.children
 import org.json.JSONObject
 import java.io.File
 import kotlin.concurrent.thread
@@ -64,7 +65,28 @@ object ProfileLogic {
         val friendsList = File(MAIN_DIR).list()
         if ((friendsList != null) && (friendsList.isNotEmpty())) {
             for (element in friendsList) {
-                val extras= File("$MAIN_DIR/$element/extras.json")
+                val extras = File("$MAIN_DIR/$element/extras.json")
+                if (extras.exists()) {
+                    val jsonObject = JSONObject(extras.readText(DEFAULT_CHARSET))
+                    container.addView(makeConversationView(context, jsonObject.getString("friendsUsername")))
+                } else {
+                    container.addView(makeConversationView(context, element))
+                }
+            }
+        }
+    }
+
+    fun addNewConversationsToLayout(context: Context, container: ViewGroup) {
+        val friendsList = File(MAIN_DIR).list()
+        val alreadyPresented = mutableSetOf<String>()
+        for (element in container.children) {
+            if (element is TextView) {
+                alreadyPresented.add(element.text.toString())
+            }
+        }
+        if ((friendsList != null) && (friendsList.isNotEmpty())) {
+            for (element in friendsList.toSet().subtract(alreadyPresented)) {
+                val extras = File("$MAIN_DIR/$element/extras.json")
                 if (extras.exists()) {
                     val jsonObject = JSONObject(extras.readText(DEFAULT_CHARSET))
                     container.addView(makeConversationView(context, jsonObject.getString("friendsUsername")))

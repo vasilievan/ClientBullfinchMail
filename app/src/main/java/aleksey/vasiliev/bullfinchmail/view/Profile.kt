@@ -5,11 +5,15 @@ import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeConversationView
 import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeFriends
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addConversationsToLayout
+import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addNewConversationsToLayout
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.createDialog
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.userNameValue
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.loginIsIncorrect
 import aleksey.vasiliev.bullfinchmail.model.updates.UpdatesChecker
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
@@ -17,6 +21,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.profile.*
 import kotlin.concurrent.thread
+
 
 class Profile : AppCompatActivity(), Normalizable {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,5 +54,11 @@ class Profile : AppCompatActivity(), Normalizable {
             }
             true
         }
+        val broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                addNewConversationsToLayout(applicationContext, container_for_conversations)
+            }
+        }
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
     }
 }

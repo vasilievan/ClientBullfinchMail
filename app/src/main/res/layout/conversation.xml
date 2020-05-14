@@ -3,10 +3,26 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/gradient_background_splashscreen"
     android:id="@+id/conversation_container"
     android:orientation="vertical">
     <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/dialog_content"
+        android:layout_gravity="bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+        <EditText
+            android:textColor="@color/text_color"
+            android:id="@+id/message_input"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:layout_margin="20sp"
+            android:textSize="20sp"
+            android:textColorHint="@color/text_color"
+            android:hint="@string/printsomething"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </EditText>
     </LinearLayout>
 </ScrollView>

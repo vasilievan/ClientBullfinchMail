@@ -41,6 +41,7 @@ object FriendsFindingLogic {
         view.typeface = typeface
         view.setOnClickListener {
             val intent = Intent(context, Conversation::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             intent.putExtra("friendsName", userName)
             context.startActivity(intent)
         }
