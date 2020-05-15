@@ -71,7 +71,6 @@ object GlobalLogic {
         if (indicator) {
             return true
         }
-        Toast.makeText(context, "Network is unavailable.", Toast.LENGTH_LONG).show()
         return false
     }
 
@@ -120,8 +119,10 @@ object GlobalLogic {
         storage.writeText(createJSONKey(key, passwordType), DEFAULT_CHARSET)
     }
 
-    fun createKeyFromJSON(login: String, keyType: String): Key {
-        val jsonObject = JSONObject(File("$MAIN_DIR/$login/$keyType.json").readText(DEFAULT_CHARSET))
+    fun createKeyFromJSON(login: String, keyType: String): Key? {
+        val storage = File("$MAIN_DIR/$login/$keyType.json")
+        if (!storage.exists()) return null
+        val jsonObject = JSONObject(storage.readText(DEFAULT_CHARSET))
         val jsonArray = jsonObject.getJSONArray(keyType)
         val byteArray = ByteArray(EXTENDED_KEY_LENGTH)
         for (i in 0 until jsonArray.length()) {

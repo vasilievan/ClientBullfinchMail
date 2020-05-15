@@ -18,6 +18,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveExtras
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveKey
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.secureRandom
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.sendSomethingToServer
+import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveMessage
 import android.content.Context
 import android.widget.Toast
 import java.io.File
@@ -165,14 +166,15 @@ class RegistrationLogic {
         return true
     }
 
-    fun checkForFriendRequests(context: Context): Boolean {
-        sendSomethingToServer(writer!!, "I want to check for friends requests.".makeByteArray())
+    fun checkForFriendRequestsAndNewMessages(context: Context): Boolean {
+        sendSomethingToServer(writer!!, "I want to check for friends requests and new messages.".makeByteArray())
+        var result = false
         val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
         val login = sharedPreferences.getString("login", null)
         val password = sharedPreferences.getString("password", null)
         if (login == null || password == null || !authoriseMe(login, password)) {
             closeClientSocket(writer, clientSocket)
-            return false
+            return result
         }
         val keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORIGM)
         keyPairGenerator.initialize(EXTENDED_KEY_LENGTH, secureRandom)
@@ -182,9 +184,7 @@ class RegistrationLogic {
         sendSomethingToServer(writer, reverseKeys.public.encoded)
         val amountOfNewRequests = decipher.doFinal(readNext(data, clientSocket)).makeString().toInt()
         sendSomethingToServer(writer, "Amount received.".makeByteArray())
-        if (amountOfNewRequests == 0) {
-            return false
-        }
+        if (amountOfNewRequests != 0) result = true
         for (i in 0 until amountOfNewRequests) {
             val friendsLogin = decipher.doFinal(readNext(data, clientSocket)).makeString()
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
@@ -201,17 +201,33 @@ class RegistrationLogic {
                 sendSomethingToServer(writer, "Stop it.".makeByteArray())
             }
         }
-        return true
+        val amountOfNewMessages = decipher.doFinal(readNext(data, clientSocket)).makeString().toInt()
+        if (amountOfNewMessages == 0) {
+            closeClientSocket()
+            return result
+        }
+        result = true
+        for (i in 0 until amountOfNewMessages) {
+            val friendsLogin = decipher.doFinal(readNext(data, clientSocket)).makeString()
+            sendSomethingToServer(writer, "Succeed.".makeByteArray())
+            val message = readNext(data, clientSocket).makeString()
+            sendSomethingToServer(writer, "Succeed.".makeByteArray())
+            val date = readNext(data, clientSocket).makeString()
+            sendSomethingToServer(writer, "Succeed.".makeByteArray())
+            saveMessage(friendsLogin, message, 1, date)
+        }
+        closeClientSocket(writer, clientSocket)
+        return result
     }
 
-    fun sendMessage(context: Context, receiver: String, messageText: ByteArray, cipheredDate: ByteArray) {
+    fun sendMessage(context: Context, receiver: String, messageText: ByteArray, cipheredDate: ByteArray): Boolean {
         sendSomethingToServer(writer!!, "I want to send a message.".makeByteArray())
         val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
         val login = sharedPreferences.getString("login", null)
         val password = sharedPreferences.getString("password", null)
         if (login == null || password == null || !authoriseMe(login, password)) {
             closeClientSocket(writer, clientSocket)
-            return
+            return false
         }
         sendSomethingToServer(writer!!, cipher.doFinal(receiver.makeByteArray()))
         readNext(data, clientSocket)
@@ -220,23 +236,6 @@ class RegistrationLogic {
         sendSomethingToServer(writer!!, messageText)
         readNext(data, clientSocket)
         closeClientSocket()
-    }
-
-    fun checkForNewMessages(context: Context): Boolean {
-        sendSomethingToServer(writer!!, "I want to check for new messages.".makeByteArray())
-        val amountOfNewMessages = readNext(data, clientSocket).makeString().toInt()
-        sendSomethingToServer(writer, "Amount received.".makeByteArray())
-        if (amountOfNewMessages == 0) {
-            closeClientSocket(writer, clientSocket)
-            return false
-        }
-        for (i in 0 until amountOfNewMessages) {
-            val friendsLogin = readNext(data, clientSocket).makeString()
-            sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            val message = readNext(data, clientSocket).makeString()
-            sendSomethingToServer(writer, "Succeed.".makeByteArray())
-        }
-        closeClientSocket(writer, clientSocket)
         return true
     }
 

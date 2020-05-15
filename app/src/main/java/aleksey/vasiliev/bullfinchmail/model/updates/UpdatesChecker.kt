@@ -15,18 +15,11 @@ class UpdatesChecker: Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timer().schedule(object : TimerTask() {
             override fun run() {
-                var requests = false
-                //var messages = false
+                var updates = false
                 val registrationLogic = RegistrationLogic()
                 val isEverythingFine = registrationLogic.exchangeKeysWithServer()
-                if (isEverythingFine) {
-                    requests = registrationLogic.checkForFriendRequests(applicationContext)
-                    //messages = registrationLogic.checkForNewMessages(applicationContext)
-                }
-                if (requests) {
-                    applicationContext.sendBroadcast(Intent("UPDATE_VIEW"))
-                }
-                //if (messages) Intent(applicationContext, Conversation::class.java)
+                if (isEverythingFine) updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
+                if (updates) applicationContext.sendBroadcast(Intent("UPDATE_VIEW"))
             }
         }, 0, 5000)
         return super.onStartCommand(intent, flags, startId)

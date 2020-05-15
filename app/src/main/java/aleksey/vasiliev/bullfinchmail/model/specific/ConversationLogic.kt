@@ -2,8 +2,12 @@ package aleksey.vasiliev.bullfinchmail.model.specific
 
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.ALLOWED_STRING_LENGTH
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_TRANSFORMATION
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.PRIVATE_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.createKeyFromJSON
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
@@ -12,20 +16,25 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
 import java.lang.StringBuilder
+import javax.crypto.Cipher
+import kotlin.math.log
 
 object ConversationLogic {
-    fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray) {
-        if (!checkIfConnectionIsAvailable(context)) return
+    fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray): Boolean {
+        if (!checkIfConnectionIsAvailable(context)) {
+            return false
+        }
         val registrationLogic = RegistrationLogic()
         val exchanged = registrationLogic.exchangeKeysWithServer()
         if (!exchanged) {
             registrationLogic.closeClientSocket()
-            return
+            return false
         }
-        registrationLogic.sendMessage(context, receiver, messageText, cipheredDate)
+        return registrationLogic.sendMessage(context, receiver, messageText, cipheredDate)
     }
 
     fun addAllMessagesFromStorage(context: Context, login: String, container: ViewGroup) {
@@ -80,9 +89,17 @@ object ConversationLogic {
 
     fun saveMessage(login: String, message: String, gr: Int, date: String = todaysDate()) {
         val jsonObject = JSONObject()
-        jsonObject.put("date", date)
         jsonObject.put("gr", gr)
-        jsonObject.put("message", message)
+        if (gr == 0) {
+            jsonObject.put("date", date)
+            jsonObject.put("message", message)
+        } else {
+            val decipher = Cipher.getInstance(KEY_TRANSFORMATION)
+            val key = createKeyFromJSON(login, PRIVATE_KEY) ?: return
+            decipher.init(Cipher.DECRYPT_MODE, key)
+            jsonObject.put("date", decipher.doFinal(date.makeByteArray()))
+            jsonObject.put("message", decipher.doFinal(message.makeByteArray()))
+        }
         val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
         myMessage.createNewFile()
         myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
