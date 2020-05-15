@@ -6,6 +6,7 @@ import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAMessa
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAllMessagesFromStorage
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.messageTextIsCorrect
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveMessage
+import android.content.Intent
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
@@ -25,12 +26,15 @@ class Conversation: AppCompatActivity(), Normalizable {
                 val messageText = message_input.text.toString()
                 if (messageTextIsCorrect(messageText)) {
                     addAMessageToUI(this, messageText, dialog_content)
-                    normalizeFont(this, conversation_container)
                     saveMessage(friendsLogin, messageText)
                     message_input.text.clear()
                 }
             }
             true
         }
+    }
+
+    override fun onBackPressed() {
+        startActivity(Intent(this, Profile::class.java))
     }
 }

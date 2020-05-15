@@ -6,6 +6,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Typeface
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -38,6 +39,7 @@ object ConversationLogic {
         params.setMargins(20, 0, 20, 20)
         messageView.layoutParams = params
         messageView.textSize = 20f
+        messageView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
         messageView.setTextColor(Color.GRAY)
         messageView.text = transformTextForAMessage(message)
         return messageView
@@ -50,25 +52,28 @@ object ConversationLogic {
         val dateParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         dateParams.setMargins(0, 20, 10, 0)
         dateParams.gravity = Gravity.END
+        dateView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
         dateView.layoutParams = dateParams
         dateView.setTextColor(Color.GRAY)
         return dateView
     }
 
-    fun saveMessage(login: String, message: String) {
+    fun saveMessage(login: String, message: String, date: String = todaysDate()) {
         val jsonObject = JSONObject()
-        jsonObject.put("date", todaysDate())
+        jsonObject.put("date", date)
         jsonObject.put("message", message)
+        val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
+        myMessage.createNewFile()
+        myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+    }
+
+    private fun makeMessageNumber(login: String): Int {
         val messages = File("${MAIN_DIR}/$login/messages").list()
-        if ((messages != null) && (messages.isNotEmpty())) {
+        return if ((messages != null) && (messages.isNotEmpty())) {
             val currentNum = messages.maxBy { it.toInt() }!!.toInt()
-            val myMessage = File("${MAIN_DIR}/$login/messages/${currentNum + 1}")
-            myMessage.createNewFile()
-            myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+            currentNum + 1
         } else {
-            val myMessage = File("${MAIN_DIR}/$login/messages/0")
-            myMessage.createNewFile()
-            myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+            0
         }
     }
 
