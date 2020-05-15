@@ -16,7 +16,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeString
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.readNext
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveExtras
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveKey
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveMessage
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.secureRandom
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.sendSomethingToServer
 import android.content.Context
@@ -174,22 +173,28 @@ class RegistrationLogic {
             closeClientSocket(writer, clientSocket)
             return false
         }
-        val amountOfNewRequests = readNext(data, clientSocket).makeString().toInt()
+
+        val keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORIGM)
+        keyPairGenerator.initialize(EXTENDED_KEY_LENGTH, secureRandom)
+        val reverseKeys = keyPairGenerator.genKeyPair()
+        val decipher = Cipher.getInstance(KEY_TRANSFORMATION)
+        decipher.init(Cipher.DECRYPT_MODE, reverseKeys.private)
+        sendSomethingToServer(writer, reverseKeys.public.encoded)
+        val amountOfNewRequests = decipher.doFinal(readNext(data, clientSocket)).makeString().toInt()
         sendSomethingToServer(writer, "Amount received.".makeByteArray())
         if (amountOfNewRequests == 0) {
             return false
         }
-        val keysGenerator = KeyPairGenerator.getInstance(KEY_ALGORIGM)
         for (i in 0 until amountOfNewRequests) {
-            val friendsLogin = readNext(data, clientSocket).makeString()
+            val friendsLogin = decipher.doFinal(readNext(data, clientSocket)).makeString()
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            val friendsUsername = readNext(data, clientSocket).makeString()
+            val friendsUsername = decipher.doFinal(readNext(data, clientSocket)).makeString()
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
             val friendsKey = readNext(data, clientSocket)
             saveKey(friendsLogin, PUBLIC_KEY, friendsKey)
             saveExtras(friendsLogin, friendsUsername)
             if (!File("$MAIN_DIR/$friendsLogin/privateKey.json").exists()) {
-                val currentUserKeyPair = keysGenerator.genKeyPair()
+                val currentUserKeyPair = keyPairGenerator.genKeyPair()
                 saveKey(friendsLogin, PRIVATE_KEY, currentUserKeyPair.private.encoded)
                 sendSomethingToServer(writer, currentUserKeyPair.public.encoded)
             } else {
@@ -212,7 +217,6 @@ class RegistrationLogic {
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
             val message = readNext(data, clientSocket).makeString()
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            saveMessage(friendsLogin, message)
         }
         closeClientSocket(writer, clientSocket)
         return true

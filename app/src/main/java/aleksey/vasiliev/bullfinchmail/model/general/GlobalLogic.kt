@@ -22,9 +22,20 @@ import java.security.SecureRandom
 import java.util.Date
 import javax.crypto.Cipher
 import java.util.Calendar
+import kotlin.math.log
 
 object GlobalLogic {
     val secureRandom = SecureRandom()
+
+    fun todaysDate(): String {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        return "$day.$month.$year $hour:$minute"
+    }
 
     fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, data: ByteArray, clientSocket: Socket?): Boolean {
         val cipheredLogin = cipher.doFinal(login.makeByteArray())
@@ -120,9 +131,5 @@ object GlobalLogic {
         val jsonObject = JSONObject()
         jsonObject.put("friendsUsername", friendsUsername)
         storage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
-    }
-
-    fun saveMessage(login: String, message: String) {
-        TODO()
     }
 }

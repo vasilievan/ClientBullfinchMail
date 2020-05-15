@@ -12,7 +12,7 @@ object Constants {
     const val KEY_TRANSFORMATION = "RSA/ECB/PKCS1Padding"
     const val PRIVATE_KEY = "privateKey"
     const val PUBLIC_KEY = "publicKey"
-    const val KEY_LENGTH = 1024
     const val EXTENDED_KEY_LENGTH = 2048
     const val KEY_ALGORIGM = "RSA"
+    const val ALLOWED_STRING_LENGTH = 30
 }

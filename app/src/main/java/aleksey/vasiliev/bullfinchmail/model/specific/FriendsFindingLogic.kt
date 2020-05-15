@@ -28,7 +28,7 @@ object FriendsFindingLogic {
         return registrationLogic.sendRequest(login!!, password!!, userName)
     }
 
-    fun makeConversationView(context: Context, userName: String): TextView {
+    fun makeConversationView(context: Context, login: String, userName: String = login): TextView {
         val typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
         val view = TextView(context)
         view.text = userName
@@ -42,6 +42,7 @@ object FriendsFindingLogic {
         view.setOnClickListener {
             val intent = Intent(context, Conversation::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.putExtra("friendsLogin", login)
             intent.putExtra("friendsName", userName)
             context.startActivity(intent)
         }

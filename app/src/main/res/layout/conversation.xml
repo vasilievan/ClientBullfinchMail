@@ -8,8 +8,6 @@
     android:orientation="vertical">
     <LinearLayout
         android:orientation="vertical"
-        android:id="@+id/dialog_content"
-        android:layout_gravity="bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <EditText
@@ -22,7 +20,12 @@
             android:textColorHint="@color/text_color"
             android:hint="@string/printsomething"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/dialog_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
-        </EditText>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

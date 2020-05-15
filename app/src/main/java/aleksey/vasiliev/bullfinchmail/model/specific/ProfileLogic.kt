@@ -8,11 +8,9 @@ import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeCon
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.userNameIsCorrect
 import android.content.Context
 import android.content.DialogInterface
-import android.content.SharedPreferences
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.children
 import org.json.JSONObject
@@ -68,7 +66,7 @@ object ProfileLogic {
                 val extras = File("$MAIN_DIR/$element/extras.json")
                 if (extras.exists()) {
                     val jsonObject = JSONObject(extras.readText(DEFAULT_CHARSET))
-                    container.addView(makeConversationView(context, jsonObject.getString("friendsUsername")))
+                    container.addView(makeConversationView(context, element, jsonObject.getString("friendsUsername")))
                 } else {
                     container.addView(makeConversationView(context, element))
                 }
@@ -89,7 +87,8 @@ object ProfileLogic {
                 val extras = File("$MAIN_DIR/$element/extras.json")
                 if (extras.exists()) {
                     val jsonObject = JSONObject(extras.readText(DEFAULT_CHARSET))
-                    container.addView(makeConversationView(context, jsonObject.getString("friendsUsername")))
+                    val localUserName = jsonObject.getString("friendsUsername")
+                    container.addView(makeConversationView(context, element, localUserName))
                 } else {
                     container.addView(makeConversationView(context, element))
                 }
