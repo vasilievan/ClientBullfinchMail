@@ -25,8 +25,8 @@ class Conversation: AppCompatActivity(), Normalizable {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val messageText = message_input.text.toString()
                 if (messageTextIsCorrect(messageText)) {
-                    addAMessageToUI(this, messageText, dialog_content)
-                    saveMessage(friendsLogin, messageText)
+                    addAMessageToUI(this, messageText, dialog_content, 0)
+                    saveMessage(friendsLogin, messageText, 0)
                     message_input.text.clear()
                 }
             }

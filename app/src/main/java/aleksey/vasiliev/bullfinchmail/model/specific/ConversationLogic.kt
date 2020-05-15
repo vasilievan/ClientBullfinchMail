@@ -21,21 +21,25 @@ object ConversationLogic {
         if (messagesList == null || messagesList.isEmpty()) return
         messagesList.sorted().forEach {
             val message = JSONObject(File("$MAIN_DIR/$login/messages/$it").readText(DEFAULT_CHARSET))
-            container.addView(makeMessageView(context, message.getString("message")), 0)
-            container.addView(makeDateView(context, message.getString("date")), 0)
+            container.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
+            container.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
         }
     }
 
-    fun addAMessageToUI(context: Context, message: String, container: ViewGroup) {
-        container.addView(makeMessageView(context, message), 0)
-        container.addView(makeDateView(context), 0)
+    fun addAMessageToUI(context: Context, message: String, container: ViewGroup, gr: Int) {
+        container.addView(makeMessageView(context, message, gr), 0)
+        container.addView(makeDateView(context, gr), 0)
     }
 
-    private fun makeMessageView(context: Context, message: String): TextView {
+    private fun makeMessageView(context: Context, message: String, gr: Int): TextView {
         val messageView = TextView(context)
         val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         params.weight = 1.0f
-        params.gravity = Gravity.END
+        if (gr == 0) {
+            params.gravity = Gravity.END
+        } else {
+            params.gravity = Gravity.START
+        }
         params.setMargins(20, 0, 20, 20)
         messageView.layoutParams = params
         messageView.textSize = 20f
@@ -45,22 +49,27 @@ object ConversationLogic {
         return messageView
     }
 
-    private fun makeDateView(context: Context, date: String = todaysDate()): TextView {
+    private fun makeDateView(context: Context, gr: Int, date: String = todaysDate()): TextView {
         val dateView = TextView(context)
         dateView.text = date
         dateView.textSize = 15f
         val dateParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         dateParams.setMargins(0, 20, 10, 0)
-        dateParams.gravity = Gravity.END
+        if (gr == 0) {
+            dateParams.gravity = Gravity.END
+        } else {
+            dateParams.gravity = Gravity.START
+        }
         dateView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
         dateView.layoutParams = dateParams
         dateView.setTextColor(Color.GRAY)
         return dateView
     }
 
-    fun saveMessage(login: String, message: String, date: String = todaysDate()) {
+    fun saveMessage(login: String, message: String, gr: Int, date: String = todaysDate()) {
         val jsonObject = JSONObject()
         jsonObject.put("date", date)
+        jsonObject.put("gr", gr)
         jsonObject.put("message", message)
         val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
         myMessage.createNewFile()
@@ -82,9 +91,7 @@ object ConversationLogic {
         val sb = StringBuilder()
         for (element in trimmed.windowed(ALLOWED_STRING_LENGTH, ALLOWED_STRING_LENGTH)) {
             sb.append(element)
-            if (!element.endsWith("\n")) {
-                sb.append("\n")
-            }
+            sb.append("\n")
         }
         val lastSymbols = trimmed.substring(trimmed.length - trimmed.length % ALLOWED_STRING_LENGTH)
         sb.append(lastSymbols)
