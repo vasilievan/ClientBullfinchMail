@@ -1,8 +1,10 @@
 package aleksey.vasiliev.bullfinchmail.model.general
 
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.EXTENDED_KEY_LENGTH
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_ALGORIGM
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.PUBLIC_KEY
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -17,8 +19,11 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.net.Socket
+import java.security.Key
+import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
+import java.security.spec.X509EncodedKeySpec
 import java.util.Date
 import javax.crypto.Cipher
 import java.util.Calendar
@@ -113,6 +118,20 @@ object GlobalLogic {
         val storage = File("$MAIN_DIR/$friendsLogin/$passwordType.json")
         if (!storage.exists()) storage.createNewFile()
         storage.writeText(createJSONKey(key, passwordType), DEFAULT_CHARSET)
+    }
+
+    fun createKeyFromJSON(login: String, keyType: String): Key {
+        val jsonObject = JSONObject(File("$MAIN_DIR/$login/$keyType.json").readText(DEFAULT_CHARSET))
+        val jsonArray = jsonObject.getJSONArray(keyType)
+        val byteArray = ByteArray(EXTENDED_KEY_LENGTH)
+        for (i in 0 until jsonArray.length()) {
+            byteArray[i] = jsonArray.getString(i).toByte()
+        }
+        return if (keyType == PUBLIC_KEY) {
+            KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(byteArray))
+        } else {
+            KeyFactory.getInstance(KEY_ALGORIGM).generatePrivate(X509EncodedKeySpec(byteArray))
+        }
     }
 
     private fun createJSONKey(key: ByteArray, passwordType: String): String {

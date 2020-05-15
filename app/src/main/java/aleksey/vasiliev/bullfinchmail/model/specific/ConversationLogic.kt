@@ -3,6 +3,7 @@ package aleksey.vasiliev.bullfinchmail.model.specific
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.ALLOWED_STRING_LENGTH
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
@@ -16,6 +17,17 @@ import java.io.File
 import java.lang.StringBuilder
 
 object ConversationLogic {
+    fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray) {
+        if (!checkIfConnectionIsAvailable(context)) return
+        val registrationLogic = RegistrationLogic()
+        val exchanged = registrationLogic.exchangeKeysWithServer()
+        if (!exchanged) {
+            registrationLogic.closeClientSocket()
+            return
+        }
+        registrationLogic.sendMessage(context, receiver, messageText, cipheredDate)
+    }
+
     fun addAllMessagesFromStorage(context: Context, login: String, container: ViewGroup) {
         val messagesList = File("$MAIN_DIR/$login/messages").list()
         if (messagesList == null || messagesList.isEmpty()) return

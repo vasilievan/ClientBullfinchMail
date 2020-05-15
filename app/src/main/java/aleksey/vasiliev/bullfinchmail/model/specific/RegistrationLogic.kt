@@ -26,6 +26,7 @@ import java.io.OutputStream
 import java.net.Socket
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
+import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 
@@ -93,7 +94,7 @@ class RegistrationLogic {
     }
 
 
-    private fun closeClientSocket() {
+    fun closeClientSocket() {
         if (clientSocket != null) {
             writer!!.close()
             clientSocket!!.close()
@@ -125,7 +126,7 @@ class RegistrationLogic {
     }
 
     private fun initCipher() {
-        cipher!!.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(publicKey)))
+        cipher!!.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(publicKey)))
     }
 
     fun changeUserName(context: Context, userName: String): Boolean {
@@ -173,7 +174,6 @@ class RegistrationLogic {
             closeClientSocket(writer, clientSocket)
             return false
         }
-
         val keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORIGM)
         keyPairGenerator.initialize(EXTENDED_KEY_LENGTH, secureRandom)
         val reverseKeys = keyPairGenerator.genKeyPair()
@@ -202,6 +202,24 @@ class RegistrationLogic {
             }
         }
         return true
+    }
+
+    fun sendMessage(context: Context, receiver: String, messageText: ByteArray, cipheredDate: ByteArray) {
+        sendSomethingToServer(writer!!, "I want to send a message.".makeByteArray())
+        val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        val login = sharedPreferences.getString("login", null)
+        val password = sharedPreferences.getString("password", null)
+        if (login == null || password == null || !authoriseMe(login, password)) {
+            closeClientSocket(writer, clientSocket)
+            return
+        }
+        sendSomethingToServer(writer!!, cipher.doFinal(receiver.makeByteArray()))
+        readNext(data, clientSocket)
+        sendSomethingToServer(writer!!, cipheredDate)
+        readNext(data, clientSocket)
+        sendSomethingToServer(writer!!, messageText)
+        readNext(data, clientSocket)
+        closeClientSocket()
     }
 
     fun checkForNewMessages(context: Context): Boolean {
