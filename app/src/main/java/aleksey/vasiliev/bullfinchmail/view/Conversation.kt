@@ -26,13 +26,19 @@ import javax.crypto.Cipher
 import kotlin.concurrent.thread
 
 class Conversation: AppCompatActivity(), Normalizable {
-
+    private var broadcastReceiver: BroadcastReceiver? = null
     private val cipher: Cipher =  Cipher.getInstance(KEY_TRANSFORMATION)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val friendsName = intent.getStringExtra("friendsName")
         val friendsLogin = intent.getStringExtra("friendsLogin")!!
+        broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                addNewMessagesToUI(applicationContext, dialog_content, friendsLogin)
+            }
+        }
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW_CONVERSATION"))
         val publicKey = createKeyFromJSON(friendsLogin, PUBLIC_KEY)
         if (publicKey != null) {
             cipher.init(Cipher.ENCRYPT_MODE, publicKey)
@@ -64,15 +70,10 @@ class Conversation: AppCompatActivity(), Normalizable {
             }
             true
         }
-        val broadcastReceiver = object: BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                addNewMessagesToUI(applicationContext, dialog_content, friendsLogin)
-            }
-        }
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW_CONVERSATION"))
     }
 
     override fun onBackPressed() {
+        unregisterReceiver(broadcastReceiver)
         startActivity(Intent(this, Profile::class.java))
     }
 }

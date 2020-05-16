@@ -22,7 +22,7 @@ class UpdatesChecker: Service() {
                     applicationContext.sendBroadcast(Intent("UPDATE_VIEW_CONVERSATION"))
                 }
             }
-        }, 0, 5000)
+        }, 0, 10000)
         return super.onStartCommand(intent, flags, startId)
     }
 }

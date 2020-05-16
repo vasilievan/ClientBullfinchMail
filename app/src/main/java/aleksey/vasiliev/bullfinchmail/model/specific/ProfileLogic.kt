@@ -6,6 +6,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeConversationView
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.userNameIsCorrect
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
 import android.view.ViewGroup

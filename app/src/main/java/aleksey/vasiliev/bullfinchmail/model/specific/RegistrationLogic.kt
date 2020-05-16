@@ -102,7 +102,8 @@ class RegistrationLogic {
     fun exchangeKeysWithServer(): Boolean {
         try {
             try {
-                clientSocket = Socket(serverIp, possiblePorts.random())
+                val port = possiblePorts.random()
+                clientSocket = Socket(serverIp, port)
             } catch (e: IOException) {
                 return false
             }
@@ -190,7 +191,8 @@ class RegistrationLogic {
             val friendsKey = readNext(data, clientSocket)
             saveKey(friendsLogin, PUBLIC_KEY, friendsKey)
             saveExtras(friendsLogin, friendsUsername)
-            if (!File("$MAIN_DIR/$friendsLogin/privateKey.json").exists()) {
+            if (!File("$MAIN_DIR/$friendsLogin/$PUBLIC_KEY.json").exists() ||
+                !File("$MAIN_DIR/$friendsLogin/$PRIVATE_KEY.json").exists()) {
                 val currentUserKeyPair = keyPairGenerator.genKeyPair()
                 saveKey(friendsLogin, PRIVATE_KEY, currentUserKeyPair.private.encoded)
                 sendSomethingToServer(writer, currentUserKeyPair.public.encoded)

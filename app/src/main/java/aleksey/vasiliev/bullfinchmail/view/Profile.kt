@@ -45,7 +45,7 @@ class Profile : AppCompatActivity(), Normalizable {
                         result = makeFriends(this, userName)
                     }.join()
                     if (result) {
-                        container_for_conversations.addView(makeConversationView(this, userName))
+                        container_for_conversations.addView(makeConversationView(applicationContext, userName))
                         Toast.makeText(this, "You sent a friend request.", Toast.LENGTH_LONG).show()
                     } else {
                         Toast.makeText(this, "Either user doesn't exist, or connection is unavailable. Try again.", Toast.LENGTH_LONG).show()
@@ -54,11 +54,5 @@ class Profile : AppCompatActivity(), Normalizable {
             }
             true
         }
-        val myBroadcastReceiver = object: BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                addNewConversationsToLayout(applicationContext, container_for_conversations)
-            }
-        }
-        registerReceiver(myBroadcastReceiver, IntentFilter("UPDATE_VIEW"))
     }
 }
