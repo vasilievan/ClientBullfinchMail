@@ -23,15 +23,15 @@ import javax.crypto.Cipher
 
 object ConversationLogic {
     fun addNewMessagesToUI(context: Context, dialog_content: ViewGroup, login: String) {
-        val already = dialog_content.childCount
+        val already = dialog_content.childCount / 2
         val dir = File("$MAIN_DIR/$login/messages")
         val list = dir.list()
         if (list != null && list.isNotEmpty()) {
             val lastOne = list.size
             for (i in already until lastOne) {
                 val message = JSONObject(File("$MAIN_DIR/$login/messages/$i").readText(DEFAULT_CHARSET))
-                dialog_content.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
                 dialog_content.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
+                dialog_content.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
             }
         }
     }
@@ -52,7 +52,7 @@ object ConversationLogic {
     fun addAllMessagesFromStorage(context: Context, login: String, container: ViewGroup) {
         val messagesList = File("$MAIN_DIR/$login/messages").list()
         if (messagesList == null || messagesList.isEmpty()) return
-        messagesList.sorted().forEach {
+        messagesList.sortedBy { it.toInt() }.forEach {
             val message = JSONObject(File("$MAIN_DIR/$login/messages/$it").readText(DEFAULT_CHARSET))
             container.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
             container.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)

@@ -49,7 +49,7 @@ class Conversation: AppCompatActivity(), Normalizable {
         normalizeFont(this, conversation_container)
         message_input.setOnEditorActionListener { _, actionId, _ ->
             if ((actionId == EditorInfo.IME_ACTION_DONE) && (publicKey != null)) {
-                val messageText = message_input.text.toString()
+                val messageText = message_input.text.toString().trim()
                 if (messageTextIsCorrect(messageText)) {
                     val cipheredMessage = cipher.doFinal(messageText.makeByteArray())
                     val cipheredDate = cipher.doFinal(todaysDate().makeByteArray())

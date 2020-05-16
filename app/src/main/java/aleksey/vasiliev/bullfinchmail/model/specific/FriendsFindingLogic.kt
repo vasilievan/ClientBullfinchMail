@@ -4,7 +4,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.SHARED_PREFERENCES_NAME
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.view.Conversation
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent

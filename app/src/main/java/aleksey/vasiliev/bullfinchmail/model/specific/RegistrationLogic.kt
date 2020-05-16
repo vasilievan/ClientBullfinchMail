@@ -104,6 +104,7 @@ class RegistrationLogic {
             try {
                 val port = possiblePorts.random()
                 clientSocket = Socket(serverIp, port)
+                println(clientSocket!!.port)
             } catch (e: IOException) {
                 return false
             }

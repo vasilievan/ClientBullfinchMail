@@ -22,11 +22,17 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.profile.*
 import kotlin.concurrent.thread
 
-
 class Profile : AppCompatActivity(), Normalizable {
+    var broadcastReceiver: BroadcastReceiver? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.profile)
+        broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                addNewConversationsToLayout(applicationContext, container_for_conversations)
+            }
+        }
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
         addConversationsToLayout(this, container_for_conversations)
         normalizeFont(this, profile_container)
         startService(Intent(this, UpdatesChecker::class.java))
@@ -54,5 +60,25 @@ class Profile : AppCompatActivity(), Normalizable {
             }
             true
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+    }
+
+    override fun onStart() {
+        super.onStart()
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(broadcastReceiver)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(broadcastReceiver)
     }
 }
