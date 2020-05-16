@@ -1,8 +1,6 @@
 package aleksey.vasiliev.bullfinchmail.model.updates
 
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
-import aleksey.vasiliev.bullfinchmail.view.Conversation
-import aleksey.vasiliev.bullfinchmail.view.Profile
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder

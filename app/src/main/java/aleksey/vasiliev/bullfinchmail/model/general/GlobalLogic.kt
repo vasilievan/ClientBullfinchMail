@@ -10,7 +10,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.json.JSONArray
@@ -21,15 +20,11 @@ import java.io.OutputStream
 import java.net.Socket
 import java.security.Key
 import java.security.KeyFactory
-import java.security.KeyPairGenerator
 import java.security.SecureRandom
-import java.security.interfaces.RSAPrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.Date
 import javax.crypto.Cipher
 import java.util.Calendar
-import kotlin.math.log
 
 object GlobalLogic {
     val secureRandom = SecureRandom()

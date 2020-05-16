@@ -11,7 +11,6 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import java.io.File
 
 object FriendsFindingLogic {

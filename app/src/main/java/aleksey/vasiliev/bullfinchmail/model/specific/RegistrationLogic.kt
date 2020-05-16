@@ -18,7 +18,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveExtras
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveKey
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.secureRandom
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.sendSomethingToServer
-import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveMessage
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveReceivedMessage
 import android.content.Context
 import android.widget.Toast
@@ -28,7 +27,6 @@ import java.io.OutputStream
 import java.net.Socket
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
-import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 
@@ -75,8 +73,6 @@ class RegistrationLogic {
     private var writer: OutputStream? = null
     private val data = ByteArray(8198)
 
-
-    // ok
     fun signingUp(login: String, password: String, userName: String): Boolean {
         sendSomethingToServer(writer!!, "I want to sign up.".makeByteArray())
         val everythingsFine = exchangeLoginAndPassword(login, password, cipher, writer, data, clientSocket)

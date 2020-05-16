@@ -53,7 +53,7 @@ class Conversation: AppCompatActivity(), Normalizable {
                     }.join()
                     if (result) {
                         addAMessageToUI(this, messageText, dialog_content, 0)
-                        saveMessage(friendsLogin, messageText, 0)
+                        saveMessage(friendsLogin, messageText)
                     } else {
                         Toast.makeText(applicationContext, "Due to unknown errors, message wasn't sent.", Toast.LENGTH_LONG).show()
                     }

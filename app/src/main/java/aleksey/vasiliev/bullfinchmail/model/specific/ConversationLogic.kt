@@ -7,7 +7,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.PRIVATE_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.createKeyFromJSON
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeString
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
@@ -21,7 +20,6 @@ import org.json.JSONObject
 import java.io.File
 import java.lang.StringBuilder
 import javax.crypto.Cipher
-import kotlin.concurrent.thread
 
 object ConversationLogic {
     fun addNewMessagesToUI(context: Context, dialog_content: ViewGroup, login: String) {
@@ -101,19 +99,11 @@ object ConversationLogic {
         return dateView
     }
 
-    fun saveMessage(login: String, message: String, gr: Int, date: String = todaysDate()) {
+    fun saveMessage(login: String, message: String) {
         val jsonObject = JSONObject()
-        jsonObject.put("gr", gr)
-        if (gr == 0) {
-            jsonObject.put("date", date)
-            jsonObject.put("message", message)
-        } else {
-            val decipher = Cipher.getInstance(KEY_TRANSFORMATION)
-            val key = createKeyFromJSON(login, PRIVATE_KEY) ?: return
-            decipher.init(Cipher.DECRYPT_MODE, key)
-            jsonObject.put("date", decipher.doFinal(date.makeByteArray()))
-            jsonObject.put("message", decipher.doFinal(message.makeByteArray()))
-        }
+        jsonObject.put("gr", 0)
+        jsonObject.put("date", todaysDate())
+        jsonObject.put("message", message)
         val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
         myMessage.createNewFile()
         myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
