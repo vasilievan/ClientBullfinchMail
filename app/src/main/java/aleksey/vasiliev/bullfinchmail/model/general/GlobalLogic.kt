@@ -23,6 +23,8 @@ import java.security.Key
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
+import java.security.interfaces.RSAPrivateKey
+import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Date
 import javax.crypto.Cipher
@@ -131,7 +133,7 @@ object GlobalLogic {
         return if (keyType == PUBLIC_KEY) {
             KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(byteArray))
         } else {
-            KeyFactory.getInstance(KEY_ALGORIGM).generatePrivate(X509EncodedKeySpec(byteArray))
+            KeyFactory.getInstance(KEY_ALGORIGM).generatePrivate(PKCS8EncodedKeySpec(byteArray))
         }
     }
 

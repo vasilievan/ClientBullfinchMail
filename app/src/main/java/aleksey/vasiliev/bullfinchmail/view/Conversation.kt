@@ -9,6 +9,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAMessageToUI
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAllMessagesFromStorage
+import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addNewMessagesToUI
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.messageTextIsCorrect
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveMessage
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.sendMessageGlobally
@@ -49,7 +50,7 @@ class Conversation: AppCompatActivity(), Normalizable {
                     var result = false
                     thread {
                         result = sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
-                    }
+                    }.join()
                     if (result) {
                         addAMessageToUI(this, messageText, dialog_content, 0)
                         saveMessage(friendsLogin, messageText, 0)
@@ -65,10 +66,10 @@ class Conversation: AppCompatActivity(), Normalizable {
         }
         val broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                // add to UI
+                addNewMessagesToUI(applicationContext, dialog_content, friendsLogin)
             }
         }
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW_CONVERSATION"))
     }
 
     override fun onBackPressed() {

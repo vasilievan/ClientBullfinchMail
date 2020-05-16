@@ -54,11 +54,11 @@ class Profile : AppCompatActivity(), Normalizable {
             }
             true
         }
-        val broadcastReceiver = object: BroadcastReceiver() {
+        val myBroadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 addNewConversationsToLayout(applicationContext, container_for_conversations)
             }
         }
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+        registerReceiver(myBroadcastReceiver, IntentFilter("UPDATE_VIEW"))
     }
 }

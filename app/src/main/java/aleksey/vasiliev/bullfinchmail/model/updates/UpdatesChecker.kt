@@ -19,7 +19,10 @@ class UpdatesChecker: Service() {
                 val registrationLogic = RegistrationLogic()
                 val isEverythingFine = registrationLogic.exchangeKeysWithServer()
                 if (isEverythingFine) updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
-                if (updates) applicationContext.sendBroadcast(Intent("UPDATE_VIEW"))
+                if (updates) {
+                    applicationContext.sendBroadcast(Intent("UPDATE_VIEW"))
+                    applicationContext.sendBroadcast(Intent("UPDATE_VIEW_CONVERSATION"))
+                }
             }
         }, 0, 5000)
         return super.onStartCommand(intent, flags, startId)

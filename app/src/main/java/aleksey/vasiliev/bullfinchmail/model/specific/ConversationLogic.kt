@@ -8,6 +8,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.PRIVATE_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.createKeyFromJSON
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeString
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
@@ -16,14 +17,27 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
 import java.lang.StringBuilder
 import javax.crypto.Cipher
-import kotlin.math.log
+import kotlin.concurrent.thread
 
 object ConversationLogic {
+    fun addNewMessagesToUI(context: Context, dialog_content: ViewGroup, login: String) {
+        val already = dialog_content.childCount
+        val dir = File("$MAIN_DIR/$login/messages")
+        val list = dir.list()
+        if (list != null && list.isNotEmpty()) {
+            val lastOne = list.size
+            for (i in already until lastOne) {
+                val message = JSONObject(File("$MAIN_DIR/$login/messages/$i").readText(DEFAULT_CHARSET))
+                dialog_content.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
+                dialog_content.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
+            }
+        }
+    }
+
     fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray): Boolean {
         if (!checkIfConnectionIsAvailable(context)) {
             return false
@@ -61,7 +75,7 @@ object ConversationLogic {
         } else {
             params.gravity = Gravity.START
         }
-        params.setMargins(20, 0, 20, 20)
+        params.setMargins(30, 0, 30, 30)
         messageView.layoutParams = params
         messageView.textSize = 20f
         messageView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
@@ -100,6 +114,19 @@ object ConversationLogic {
             jsonObject.put("date", decipher.doFinal(date.makeByteArray()))
             jsonObject.put("message", decipher.doFinal(message.makeByteArray()))
         }
+        val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
+        myMessage.createNewFile()
+        myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+    }
+
+    fun saveReceivedMessage(login: String, message: ByteArray, date: ByteArray) {
+        val jsonObject = JSONObject()
+        jsonObject.put("gr", 1)
+        val decipher = Cipher.getInstance(KEY_TRANSFORMATION)
+        val key = createKeyFromJSON(login, PRIVATE_KEY) ?: return
+        decipher.init(Cipher.DECRYPT_MODE, key)
+        jsonObject.put("date", decipher.doFinal(date).makeString())
+        jsonObject.put("message", decipher.doFinal(message).makeString())
         val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
         myMessage.createNewFile()
         myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)

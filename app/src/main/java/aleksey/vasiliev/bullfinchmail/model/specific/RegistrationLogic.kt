@@ -19,6 +19,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.saveKey
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.secureRandom
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.sendSomethingToServer
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveMessage
+import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.saveReceivedMessage
 import android.content.Context
 import android.widget.Toast
 import java.io.File
@@ -210,11 +211,11 @@ class RegistrationLogic {
         for (i in 0 until amountOfNewMessages) {
             val friendsLogin = decipher.doFinal(readNext(data, clientSocket)).makeString()
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            val message = readNext(data, clientSocket).makeString()
+            val date = readNext(data, clientSocket)
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            val date = readNext(data, clientSocket).makeString()
+            val message = readNext(data, clientSocket)
             sendSomethingToServer(writer, "Succeed.".makeByteArray())
-            saveMessage(friendsLogin, message, 1, date)
+            saveReceivedMessage(friendsLogin, message, date)
         }
         closeClientSocket(writer, clientSocket)
         return result
