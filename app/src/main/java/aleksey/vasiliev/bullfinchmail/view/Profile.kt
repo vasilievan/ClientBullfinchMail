@@ -3,7 +3,6 @@ package aleksey.vasiliev.bullfinchmail.view
 import aleksey.vasiliev.bullfinchmail.R
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeConversationView
-import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeFriends
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addConversationsToLayout
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addNewConversationsToLayout
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.createDialog
@@ -24,6 +23,7 @@ import kotlin.concurrent.thread
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_SENT_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_WARNING_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 
 class Profile : AppCompatActivity(), Normalizable {
     var broadcastReceiver: BroadcastReceiver? = null
@@ -51,13 +51,14 @@ class Profile : AppCompatActivity(), Normalizable {
                 if (!loginIsIncorrect(userName)) {
                     var result = false
                     thread {
-                        result = makeFriends(this, userName)
+                        val registrationLogic = RegistrationLogic()
+                        result = registrationLogic.makeFriends(applicationContext, userName)
                     }.join()
                     if (result) {
                         container_for_conversations.addView(makeConversationView(applicationContext, userName))
-                        Toast.makeText(this, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
+                        Toast.makeText(applicationContext, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
                     } else {
-                        Toast.makeText(this, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
+                        Toast.makeText(applicationContext, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
                     }
                 }
             }

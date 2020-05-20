@@ -3,7 +3,6 @@ package aleksey.vasiliev.bullfinchmail.model.specific
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.secureRandom
 import aleksey.vasiliev.bullfinchmail.model.general.DataBase
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.closeClientSocket
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.exchangeLoginAndPassword
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeString
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.readNext
@@ -18,6 +17,7 @@ import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.getSharedPreferences
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.AMOUNT_RECEIVED_RESPONSE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CHANGE_USERNAME_RESPONSE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CHECK_UPDATES_RESPONSE
@@ -31,7 +31,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.STOP_IT_RESP
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.SUCCEED_RESPONSE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.SUCCESS_COMMAND
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.VALID_USER_COMMAND
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.AUTHORISED
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.EXTENDED_KEY_LENGTH
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.JSON_FORMAT
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_ALGORIGM
@@ -43,8 +42,9 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.POSSIBLE_PORTS
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.PRIVATE_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.PUBLIC_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.SERVER_IP
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.SHARED_PREFERENCES_NAME
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.USERNAME
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases
+import kotlin.concurrent.thread
 
 class RegistrationLogic {
 
@@ -73,17 +73,6 @@ class RegistrationLogic {
             }
             return true
         }
-
-        fun saveLocalData (context: Context, login: String, password: String, userName:String) {
-            val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
-            with (sharedPreferences.edit()) {
-                putBoolean(AUTHORISED, true)
-                putString(LOGIN, login)
-                putString(PASSWORD, password)
-                putString(USERNAME, userName)
-                commit()
-            }
-        }
     }
 
     fun signingUp(login: String, password: String, userName: String): Boolean {
@@ -104,6 +93,65 @@ class RegistrationLogic {
         return true
     }
 
+    fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray): Boolean {
+        if (!GlobalLogic.checkIfConnectionIsAvailable(context)) {
+            return false
+        }
+        val registrationLogic = RegistrationLogic()
+        val exchanged = registrationLogic.exchangeKeysWithServer()
+        if (!exchanged) {
+            registrationLogic.closeClientSocket()
+            return false
+        }
+        return registrationLogic.sendMessage(context, receiver, messageText, cipheredDate)
+    }
+
+    fun changeUserNameGlobally(context: Context, userName: String): Boolean {
+        if (!GlobalLogic.checkIfConnectionIsAvailable(context)) return false
+        val registrationLogic = RegistrationLogic()
+        var nameWasChanged = false
+        thread {
+            val exchanged = registrationLogic.exchangeKeysWithServer()
+            if (exchanged) {
+                nameWasChanged = registrationLogic.changeUserName(context, userName)
+            }
+        }.join()
+        return nameWasChanged
+    }
+
+    fun makeFriends(context: Context, userName: String): Boolean {
+        if (!GlobalLogic.checkIfConnectionIsAvailable(context)) return false
+        val sharedPreferences = getSharedPreferences(context)
+        val login = sharedPreferences.getString(LOGIN, null)
+        if (userName == login) return false
+        with(File(MAIN_DIR)) {
+            val alreadyBefriended = list() ?: Array(0){""}
+            if (userName in alreadyBefriended) return false
+            val password = sharedPreferences.getString(PASSWORD, null)
+            val registrationLogic = RegistrationLogic()
+            val exchanged = registrationLogic.exchangeKeysWithServer()
+            if (!exchanged) return false
+            return registrationLogic.sendRequest(login!!, password!!, userName)
+        }
+    }
+
+    private fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, clientSocket: Socket?): Boolean {
+        val cipheredLogin = cipher.doFinal(login.makeByteArray())
+        sendSomethingToServer(writer!!, cipheredLogin)
+        val ifLoginIsCorrect = readNext(clientSocket).makeString()
+        if (ifLoginIsCorrect != ProtocolPhrases.CORRECT_LOGIN_COMMAND) {
+            closeClientSocket(writer, clientSocket)
+            return false
+        }
+        val cipheredPassword = cipher.doFinal(password.makeByteArray())
+        sendSomethingToServer(writer, cipheredPassword)
+        val ifPasswordIsCorrect = readNext(clientSocket).makeString()
+        if (ifPasswordIsCorrect != ProtocolPhrases.CORRECT_PASSWORD_COMMAND) {
+            closeClientSocket(writer, clientSocket)
+            return false
+        }
+        return true
+    }
 
     fun closeClientSocket() {
         if (clientSocket != null) {
@@ -137,12 +185,11 @@ class RegistrationLogic {
         return false
     }
 
-    private fun initCipher() {
-        cipher!!.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(publicKey)))
-    }
+    private fun initCipher() = cipher!!.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(publicKey)))
+
 
     fun changeUserName(context: Context, userName: String): Boolean {
-        val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(context)
         val login = sharedPreferences.getString(LOGIN, null)
         val password = sharedPreferences.getString(PASSWORD, null)
         sendSomethingToServer(writer!!, CHANGE_USERNAME_RESPONSE)
@@ -181,7 +228,7 @@ class RegistrationLogic {
     fun checkForFriendRequestsAndNewMessages(context: Context): Boolean {
         sendSomethingToServer(writer!!, CHECK_UPDATES_RESPONSE)
         var result = false
-        val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(context)
         val login = sharedPreferences.getString(LOGIN, null)
         val password = sharedPreferences.getString(PASSWORD, null)
         if (login == null || password == null || !authoriseMe(login, password)) {
@@ -206,13 +253,18 @@ class RegistrationLogic {
             val friendsKey = readNext(clientSocket)
             db.saveKey(friendsLogin, PUBLIC_KEY, friendsKey)
             db.saveExtras(friendsLogin, friendsUsername)
-            if (!File("$MAIN_DIR/$friendsLogin/$PUBLIC_KEY$JSON_FORMAT").exists() ||
-                !File("$MAIN_DIR/$friendsLogin/$PRIVATE_KEY$JSON_FORMAT").exists()) {
-                val currentUserKeyPair = keyPairGenerator.genKeyPair()
-                db.saveKey(friendsLogin, PRIVATE_KEY, currentUserKeyPair.private.encoded)
-                sendSomethingToServer(writer, currentUserKeyPair.public.encoded)
-            } else {
-                sendSomethingToServer(writer, STOP_IT_RESPONSE)
+            with(File("$MAIN_DIR/$friendsLogin/$PUBLIC_KEY$JSON_FORMAT")) {
+                if (!exists()) {
+                    with(File("$MAIN_DIR/$friendsLogin/$PRIVATE_KEY$JSON_FORMAT")) {
+                        if (!exists()) {
+                            val currentUserKeyPair = keyPairGenerator.genKeyPair()
+                            db.saveKey(friendsLogin, PRIVATE_KEY, currentUserKeyPair.private.encoded)
+                            sendSomethingToServer(writer, currentUserKeyPair.public.encoded)
+                        }
+                    }
+                } else {
+                    sendSomethingToServer(writer, STOP_IT_RESPONSE)
+                }
             }
         }
         val amountOfNewMessages = decipher.doFinal(readNext(clientSocket)).makeString().toInt()
@@ -236,7 +288,7 @@ class RegistrationLogic {
 
     fun sendMessage(context: Context, receiver: String, messageText: ByteArray, cipheredDate: ByteArray): Boolean {
         sendSomethingToServer(writer!!, SEND_MESSAGE_RESPONSE)
-        val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(context)
         val login = sharedPreferences.getString(LOGIN, null)
         val password = sharedPreferences.getString(PASSWORD, null)
         if (login == null || password == null || !authoriseMe(login, password)) {

@@ -1,6 +1,5 @@
 package aleksey.vasiliev.bullfinchmail.model.specific
 
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
@@ -24,38 +23,32 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.MESSAGES
 object ConversationLogic {
     fun addNewMessagesToUI(context: Context, dialog_content: ViewGroup, login: String) {
         val already = dialog_content.childCount / 2
-        val dir = File("$MAIN_DIR/$login/$MESSAGES")
-        val list = dir.list()
-        if (list != null && list.isNotEmpty()) {
-            val lastOne = list.size
-            for (i in already until lastOne) {
-                val message = JSONObject(File("$MAIN_DIR/$login/$MESSAGES/$i").readText(DEFAULT_CHARSET))
-                dialog_content.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
-                dialog_content.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
+        with(File("$MAIN_DIR/$login/$MESSAGES")) {
+            val list = list()
+            if (list != null && list.isNotEmpty()) {
+                val lastOne = list.size
+                for (i in already until lastOne) {
+                    with (File("$MAIN_DIR/$login/$MESSAGES/$i")) {
+                        val message = JSONObject(readText(DEFAULT_CHARSET))
+                        dialog_content.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
+                        dialog_content.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
+                    }
+                }
             }
         }
     }
 
-    fun sendMessageGlobally(context: Context, receiver: String,  messageText: ByteArray, cipheredDate: ByteArray): Boolean {
-        if (!checkIfConnectionIsAvailable(context)) {
-            return false
-        }
-        val registrationLogic = RegistrationLogic()
-        val exchanged = registrationLogic.exchangeKeysWithServer()
-        if (!exchanged) {
-            registrationLogic.closeClientSocket()
-            return false
-        }
-        return registrationLogic.sendMessage(context, receiver, messageText, cipheredDate)
-    }
-
     fun addAllMessagesFromStorage(context: Context, login: String, container: ViewGroup) {
-        val messagesList = File("$MAIN_DIR/$login/$MESSAGES").list()
-        if (messagesList == null || messagesList.isEmpty()) return
-        messagesList.sortedBy { it.toInt() }.forEach {
-            val message = JSONObject(File("$MAIN_DIR/$login/$MESSAGES/$it").readText(DEFAULT_CHARSET))
-            container.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
-            container.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
+        with(File("$MAIN_DIR/$login/$MESSAGES")) {
+            val messagesList = list()
+            if (messagesList == null || messagesList.isEmpty()) return
+            messagesList.sortedBy { it.toInt() }.forEach {
+                with(File("$MAIN_DIR/$login/$MESSAGES/$it")) {
+                    val message = JSONObject(readText(DEFAULT_CHARSET))
+                    container.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
+                    container.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
+                }
+            }
         }
     }
 
@@ -97,16 +90,6 @@ object ConversationLogic {
         dateView.layoutParams = dateParams
         dateView.setTextColor(Color.GRAY)
         return dateView
-    }
-
-    fun makeMessageNumber(login: String): Int {
-        val messages = File("$MAIN_DIR/$login/$MESSAGES").list()
-        return if ((messages != null) && (messages.isNotEmpty())) {
-            val currentNum = messages.maxBy { it.toInt() }!!.toInt()
-            currentNum + 1
-        } else {
-            0
-        }
     }
 
     private fun transformTextForAMessage(message: String): String {

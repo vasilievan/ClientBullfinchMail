@@ -12,31 +12,24 @@ import java.io.OutputStream
 import java.net.Socket
 import java.security.SecureRandom
 import java.util.Calendar
-import javax.crypto.Cipher
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.APP_BUFFER_SIZE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
-import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CORRECT_LOGIN_COMMAND
-import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CORRECT_PASSWORD_COMMAND
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 
 object GlobalLogic {
     val secureRandom = SecureRandom()
 
-    fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, clientSocket: Socket?): Boolean {
-        val cipheredLogin = cipher.doFinal(login.makeByteArray())
-        sendSomethingToServer(writer!!, cipheredLogin)
-        val ifLoginIsCorrect = readNext(clientSocket).makeString()
-        if (ifLoginIsCorrect != CORRECT_LOGIN_COMMAND) {
-            closeClientSocket(writer, clientSocket)
-            return false
-        }
-        val cipheredPassword = cipher.doFinal(password.makeByteArray())
-        sendSomethingToServer(writer, cipheredPassword)
-        val ifPasswordIsCorrect = readNext(clientSocket).makeString()
-        if (ifPasswordIsCorrect != CORRECT_PASSWORD_COMMAND) {
-            closeClientSocket(writer, clientSocket)
-            return false
-        }
-        return true
+    fun getSharedPreferences(context: Context): SharedPreferences {
+        val masterKeyAlias = MasterKeys.getOrCreate(Constants.ENCYPTED_SP_KEY_SPECIFICATION)
+        return EncryptedSharedPreferences.create(
+            Constants.ENCRYPTED_SP_NAME,
+            masterKeyAlias,
+            context,
+            Constants.ENCRYPTED_SP_KEY_SCHEME,
+            Constants.ENCRYPTED_SP_VALUE_SCHEME
+        )
     }
 
     fun String.makeByteArray(): ByteArray = this.toByteArray(DEFAULT_CHARSET)

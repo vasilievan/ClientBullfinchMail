@@ -9,7 +9,6 @@ import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAMessa
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAllMessagesFromStorage
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addNewMessagesToUI
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.messageTextIsCorrect
-import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.sendMessageGlobally
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -27,6 +26,7 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.FRIENDS_NAME
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_TRANSFORMATION
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.PUBLIC_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_CONVERSATION_ACTION
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 
 
 class Conversation: AppCompatActivity(), Normalizable {
@@ -60,7 +60,8 @@ class Conversation: AppCompatActivity(), Normalizable {
                     val cipheredDate = cipher.doFinal(todaysDate().makeByteArray())
                     var result = false
                     thread {
-                        result = sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
+                        val registrationLogic = RegistrationLogic()
+                        result = registrationLogic.sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
                     }.join()
                     if (result) {
                         addAMessageToUI(this, messageText, dialog_content, 0)

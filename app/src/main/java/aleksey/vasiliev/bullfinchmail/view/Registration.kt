@@ -1,12 +1,12 @@
 package aleksey.vasiliev.bullfinchmail.view
 
 import aleksey.vasiliev.bullfinchmail.R
+import aleksey.vasiliev.bullfinchmail.model.general.DataBase
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.askForPermissions
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.checkLoginAndPassword
-import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.saveLocalData
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.userNameIsCorrect
 import android.content.Intent
 import android.os.Bundle
@@ -46,7 +46,8 @@ class Registration : AppCompatActivity(), Normalizable {
             return
         }
         Toast.makeText(this, REGISTRATION_SUCCESS_PHRASE , Toast.LENGTH_LONG).show()
-        saveLocalData(this, login, password, userName)
+        val db = DataBase()
+        db.saveLocalData(this, login, password, userName)
         startActivity(Intent(this, Profile::class.java))
     }
 }

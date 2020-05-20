@@ -1,11 +1,12 @@
 package aleksey.vasiliev.bullfinchmail.model.general
 
 import android.os.Environment
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 
 object Constants {
     private val ROOT_DIR = Environment.getExternalStorageDirectory()
     val MAIN_DIR = "$ROOT_DIR/BullfinchMail"
-    const val SHARED_PREFERENCES_NAME = "BullfinchMail"
     const val SERVER_IP = "simsim.ftp.sh"
     val POSSIBLE_PORTS = setOf(4051, 4052, 4053, 4054, 4055, 4056, 4057, 4058, 4059)
     val DEFAULT_CHARSET = Charsets.UTF_8
@@ -36,4 +37,8 @@ object Constants {
     const val RIGHT_GRAVITY = 0
     const val LEFT_GRAVITY = 1
     const val APP_BUFFER_SIZE = 8198
+    const val ENCRYPTED_SP_NAME = "BullfinchMailEncyptedSharedPreferences"
+    val ENCYPTED_SP_KEY_SPECIFICATION = MasterKeys.AES256_GCM_SPEC
+    val ENCRYPTED_SP_KEY_SCHEME = EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV
+    val ENCRYPTED_SP_VALUE_SCHEME = EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
 }
