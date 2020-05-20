@@ -14,6 +14,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import java.util.Timer
 import java.util.TimerTask
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_CONVERSATION_ACTION
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.UPDATE_PHRASE
 
 class UpdatesChecker: Service() {
     override fun onBind(intent: Intent?): IBinder? = null
@@ -29,9 +32,9 @@ class UpdatesChecker: Service() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         createNotificationChannel()
                     }
-                    notifyDearUser("You have a new message or friend request.")
-                    applicationContext.sendBroadcast(Intent("UPDATE_VIEW"))
-                    applicationContext.sendBroadcast(Intent("UPDATE_VIEW_CONVERSATION"))
+                    notifyDearUser(UPDATE_PHRASE)
+                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_ACTION))
+                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_CONVERSATION_ACTION))
                 }
             }
         }, 0, 5000)
@@ -52,7 +55,7 @@ class UpdatesChecker: Service() {
     private fun notifyDearUser(str: String) {
         val builder = NotificationCompat.Builder(this, getString(R.string.app_name))
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("BullfinchMail")
+            .setContentTitle(R.string.app_name.toString())
             .setContentText(str)
             .setStyle(NotificationCompat.BigTextStyle())
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

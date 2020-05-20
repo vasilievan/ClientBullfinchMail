@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import java.util.Calendar
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.BOOT_COMPLETED
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.TEN_MINUTES
 
 class AutoStart: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -15,7 +17,7 @@ class AutoStart: BroadcastReceiver() {
             Intent(context, AutoStart::class.java),
             PendingIntent.FLAG_NO_CREATE
         ) != null
-        if ((intent!!.action == "android.intent.action.BOOT_COMPLETED") && (!alarmUp)) {
+        if ((intent!!.action == BOOT_COMPLETED) && (!alarmUp)) {
             val alarmMgr: AlarmManager?
             lateinit var alarmIntent: PendingIntent
             alarmMgr = context!!.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -29,7 +31,7 @@ class AutoStart: BroadcastReceiver() {
             alarmMgr.setRepeating(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,
-                1000 * 60 * 10,
+                TEN_MINUTES,
                 alarmIntent
             )
         }

@@ -15,6 +15,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.registration.*
 import kotlin.concurrent.thread
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REGISTRATION_SUCCESS_PHRASE
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REGISTRATION_WARNING_PHRASE
 
 class Registration : AppCompatActivity(), Normalizable {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,10 +42,10 @@ class Registration : AppCompatActivity(), Normalizable {
             }
         }.join()
         if (!loginAndPasswordExchangeIndicator) {
-            Toast.makeText(this, "Either login is already in use, or connection was unavailable. Try again.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, REGISTRATION_WARNING_PHRASE, Toast.LENGTH_LONG).show()
             return
         }
-        Toast.makeText(this, "You were signed up! Congratulations!", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, REGISTRATION_SUCCESS_PHRASE , Toast.LENGTH_LONG).show()
         saveLocalData(this, login, password, userName)
         startActivity(Intent(this, Profile::class.java))
     }

@@ -1,13 +1,6 @@
 package aleksey.vasiliev.bullfinchmail.model.specific
 
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.ALLOWED_STRING_LENGTH
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_TRANSFORMATION
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.PRIVATE_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.checkIfConnectionIsAvailable
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.createKeyFromJSON
-import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeString
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import android.content.Context
 import android.graphics.Color
@@ -19,19 +12,26 @@ import android.widget.TextView
 import org.json.JSONObject
 import java.io.File
 import java.lang.StringBuilder
-import javax.crypto.Cipher
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.ALLOWED_STRING_LENGTH
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.DATE
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.FONT_NAME
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.GRAVITY
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.MESSAGE
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.MESSAGES
 
 object ConversationLogic {
     fun addNewMessagesToUI(context: Context, dialog_content: ViewGroup, login: String) {
         val already = dialog_content.childCount / 2
-        val dir = File("$MAIN_DIR/$login/messages")
+        val dir = File("$MAIN_DIR/$login/$MESSAGES")
         val list = dir.list()
         if (list != null && list.isNotEmpty()) {
             val lastOne = list.size
             for (i in already until lastOne) {
-                val message = JSONObject(File("$MAIN_DIR/$login/messages/$i").readText(DEFAULT_CHARSET))
-                dialog_content.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
-                dialog_content.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
+                val message = JSONObject(File("$MAIN_DIR/$login/$MESSAGES/$i").readText(DEFAULT_CHARSET))
+                dialog_content.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
+                dialog_content.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
             }
         }
     }
@@ -50,12 +50,12 @@ object ConversationLogic {
     }
 
     fun addAllMessagesFromStorage(context: Context, login: String, container: ViewGroup) {
-        val messagesList = File("$MAIN_DIR/$login/messages").list()
+        val messagesList = File("$MAIN_DIR/$login/$MESSAGES").list()
         if (messagesList == null || messagesList.isEmpty()) return
         messagesList.sortedBy { it.toInt() }.forEach {
-            val message = JSONObject(File("$MAIN_DIR/$login/messages/$it").readText(DEFAULT_CHARSET))
-            container.addView(makeMessageView(context, message.getString("message"), message.getInt("gr")), 0)
-            container.addView(makeDateView(context, message.getInt("gr"), message.getString("date")), 0)
+            val message = JSONObject(File("$MAIN_DIR/$login/$MESSAGES/$it").readText(DEFAULT_CHARSET))
+            container.addView(makeMessageView(context, message.getString(MESSAGE), message.getInt(GRAVITY)), 0)
+            container.addView(makeDateView(context, message.getInt(GRAVITY), message.getString(DATE)), 0)
         }
     }
 
@@ -76,7 +76,7 @@ object ConversationLogic {
         params.setMargins(30, 0, 30, 30)
         messageView.layoutParams = params
         messageView.textSize = 20f
-        messageView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
+        messageView.typeface = Typeface.createFromAsset(context.assets, FONT_NAME)
         messageView.setTextColor(Color.GRAY)
         messageView.text = transformTextForAMessage(message)
         return messageView
@@ -93,37 +93,14 @@ object ConversationLogic {
         } else {
             dateParams.gravity = Gravity.START
         }
-        dateView.typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
+        dateView.typeface = Typeface.createFromAsset(context.assets, FONT_NAME)
         dateView.layoutParams = dateParams
         dateView.setTextColor(Color.GRAY)
         return dateView
     }
 
-    fun saveMessage(login: String, message: String) {
-        val jsonObject = JSONObject()
-        jsonObject.put("gr", 0)
-        jsonObject.put("date", todaysDate())
-        jsonObject.put("message", message)
-        val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
-        myMessage.createNewFile()
-        myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
-    }
-
-    fun saveReceivedMessage(login: String, message: ByteArray, date: ByteArray) {
-        val jsonObject = JSONObject()
-        jsonObject.put("gr", 1)
-        val decipher = Cipher.getInstance(KEY_TRANSFORMATION)
-        val key = createKeyFromJSON(login, PRIVATE_KEY) ?: return
-        decipher.init(Cipher.DECRYPT_MODE, key)
-        jsonObject.put("date", decipher.doFinal(date).makeString())
-        jsonObject.put("message", decipher.doFinal(message).makeString())
-        val myMessage = File("${MAIN_DIR}/$login/messages/${makeMessageNumber(login)}")
-        myMessage.createNewFile()
-        myMessage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
-    }
-
-    private fun makeMessageNumber(login: String): Int {
-        val messages = File("${MAIN_DIR}/$login/messages").list()
+    fun makeMessageNumber(login: String): Int {
+        val messages = File("$MAIN_DIR/$login/$MESSAGES").list()
         return if ((messages != null) && (messages.isNotEmpty())) {
             val currentNum = messages.maxBy { it.toInt() }!!.toInt()
             currentNum + 1

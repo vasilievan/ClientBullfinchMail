@@ -7,10 +7,11 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.view.iterator
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.FONT_NAME
 
 interface Normalizable {
     fun <T: ViewGroup> normalizeFont(context: Context, container: T) {
-        val typeface = Typeface.createFromAsset(context.assets, "consolas.ttf")
+        val typeface = Typeface.createFromAsset(context.assets, FONT_NAME)
         for (element in container) {
             when (element) {
                 is EditText -> element.typeface = typeface

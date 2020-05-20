@@ -1,10 +1,5 @@
 package aleksey.vasiliev.bullfinchmail.model.general
 
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.EXTENDED_KEY_LENGTH
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_ALGORIGM
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.MAIN_DIR
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.PUBLIC_KEY
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -12,45 +7,32 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.net.Socket
-import java.security.Key
-import java.security.KeyFactory
 import java.security.SecureRandom
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
-import javax.crypto.Cipher
 import java.util.Calendar
+import javax.crypto.Cipher
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.APP_BUFFER_SIZE
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CORRECT_LOGIN_COMMAND
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.CORRECT_PASSWORD_COMMAND
 
 object GlobalLogic {
     val secureRandom = SecureRandom()
 
-    fun todaysDate(): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        return "$day.$month.$year $hour:$minute"
-    }
-
-    fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, data: ByteArray, clientSocket: Socket?): Boolean {
+    fun exchangeLoginAndPassword(login: String, password: String, cipher: Cipher, writer: OutputStream?, clientSocket: Socket?): Boolean {
         val cipheredLogin = cipher.doFinal(login.makeByteArray())
         sendSomethingToServer(writer!!, cipheredLogin)
-        val ifLoginIsCorrect = readNext(data, clientSocket).makeString()
-        if (ifLoginIsCorrect != "Login is correct.") {
+        val ifLoginIsCorrect = readNext(clientSocket).makeString()
+        if (ifLoginIsCorrect != CORRECT_LOGIN_COMMAND) {
             closeClientSocket(writer, clientSocket)
             return false
         }
         val cipheredPassword = cipher.doFinal(password.makeByteArray())
         sendSomethingToServer(writer, cipheredPassword)
-        val ifPasswordIsCorrect = readNext(data, clientSocket).makeString()
-        if (ifPasswordIsCorrect != "Password is correct.") {
+        val ifPasswordIsCorrect = readNext(clientSocket).makeString()
+        if (ifPasswordIsCorrect != CORRECT_PASSWORD_COMMAND) {
             closeClientSocket(writer, clientSocket)
             return false
         }
@@ -94,10 +76,11 @@ object GlobalLogic {
         writer?.flush()
     }
 
-    fun readNext(data: ByteArray, clientSocket: Socket?): ByteArray {
+    fun readNext(clientSocket: Socket?): ByteArray {
+        val data = ByteArray(APP_BUFFER_SIZE)
         while (true) {
             try {
-                val count = clientSocket!!.getInputStream().read(data, 0, data.size)
+                val count = clientSocket!!.getInputStream().read(data, 0, APP_BUFFER_SIZE)
                 if (count > 0) {
                     return data.copyOfRange(0, count)
                 } else if (count == -1) {
@@ -109,44 +92,13 @@ object GlobalLogic {
         return ByteArray(0)
     }
 
-    fun saveKey(friendsLogin: String, passwordType: String, key: ByteArray) {
-        File("$MAIN_DIR/$friendsLogin/messages").mkdirs()
-        val storage = File("$MAIN_DIR/$friendsLogin/$passwordType.json")
-        if (!storage.exists()) storage.createNewFile()
-        storage.writeText(createJSONKey(key, passwordType), DEFAULT_CHARSET)
-    }
-
-    fun createKeyFromJSON(login: String, keyType: String): Key? {
-        val storage = File("$MAIN_DIR/$login/$keyType.json")
-        if (!storage.exists()) return null
-        val jsonObject = JSONObject(storage.readText(DEFAULT_CHARSET))
-        val jsonArray = jsonObject.getJSONArray(keyType)
-        val byteArray = ByteArray(EXTENDED_KEY_LENGTH)
-        for (i in 0 until jsonArray.length()) {
-            byteArray[i] = jsonArray.getString(i).toByte()
-        }
-        return if (keyType == PUBLIC_KEY) {
-            KeyFactory.getInstance(KEY_ALGORIGM).generatePublic(X509EncodedKeySpec(byteArray))
-        } else {
-            KeyFactory.getInstance(KEY_ALGORIGM).generatePrivate(PKCS8EncodedKeySpec(byteArray))
-        }
-    }
-
-    private fun createJSONKey(key: ByteArray, passwordType: String): String {
-        val jsonObject = JSONObject()
-        val jsonArray = JSONArray()
-        for (element in key) {
-            jsonArray.put(element)
-        }
-        jsonObject.put(passwordType, jsonArray)
-        return jsonObject.toString()
-    }
-
-    fun saveExtras(friendsLogin: String, friendsUsername: String) {
-        val storage = File("$MAIN_DIR/$friendsLogin/extras.json")
-        if (!storage.exists()) storage.createNewFile()
-        val jsonObject = JSONObject()
-        jsonObject.put("friendsUsername", friendsUsername)
-        storage.writeText(jsonObject.toString(), DEFAULT_CHARSET)
+    fun todaysDate(): String {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        return "$day.$month.$year $hour:$minute"
     }
 }

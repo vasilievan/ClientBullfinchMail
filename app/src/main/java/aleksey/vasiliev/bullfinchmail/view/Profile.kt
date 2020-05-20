@@ -21,6 +21,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.profile.*
 import kotlin.concurrent.thread
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_SENT_PHRASE
+import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_WARNING_PHRASE
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
 
 class Profile : AppCompatActivity(), Normalizable {
     var broadcastReceiver: BroadcastReceiver? = null
@@ -32,7 +35,7 @@ class Profile : AppCompatActivity(), Normalizable {
                 addNewConversationsToLayout(applicationContext, container_for_conversations)
             }
         }
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+        registerReceiver(broadcastReceiver, IntentFilter(UPDATE_VIEW_ACTION))
         addConversationsToLayout(this, container_for_conversations)
         normalizeFont(this, profile_container)
         startService(Intent(this, UpdatesChecker::class.java))
@@ -52,9 +55,9 @@ class Profile : AppCompatActivity(), Normalizable {
                     }.join()
                     if (result) {
                         container_for_conversations.addView(makeConversationView(applicationContext, userName))
-                        Toast.makeText(this, "You sent a friend request.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
                     } else {
-                        Toast.makeText(this, "Either user doesn't exist, or connection is unavailable. Try again.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -64,21 +67,11 @@ class Profile : AppCompatActivity(), Normalizable {
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
+        registerReceiver(broadcastReceiver, IntentFilter(UPDATE_VIEW_ACTION))
     }
 
-    override fun onStart() {
-        super.onStart()
-        registerReceiver(broadcastReceiver, IntentFilter("UPDATE_VIEW"))
-    }
-
-    override fun onStop() {
-        super.onStop()
-        unregisterReceiver(broadcastReceiver)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onPause() {
+        super.onPause()
         unregisterReceiver(broadcastReceiver)
     }
 }
