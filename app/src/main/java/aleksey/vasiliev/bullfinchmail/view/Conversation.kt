@@ -5,9 +5,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.DataBase
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.todaysDate
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
-import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAMessageToUI
-import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addAllMessagesFromStorage
-import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.addNewMessagesToUI
 import aleksey.vasiliev.bullfinchmail.model.specific.ConversationLogic.messageTextIsCorrect
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -20,26 +17,37 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.conversation.*
 import javax.crypto.Cipher
 import kotlin.concurrent.thread
+import aleksey.vasiliev.bullfinchmail.model.specific.Message
+import aleksey.vasiliev.bullfinchmail.model.specific.MessageAdapter
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.MESSAGE_NOT_SENT_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.FRIENDS_LOGIN
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.FRIENDS_NAME
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.KEY_TRANSFORMATION
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.PUBLIC_KEY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_CONVERSATION_ACTION
-import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
-
 
 class Conversation: AppCompatActivity(), Normalizable {
     private var broadcastReceiver: BroadcastReceiver? = null
     private val cipher: Cipher =  Cipher.getInstance(KEY_TRANSFORMATION)
+    private val db = DataBase()
+    private var messageList: MutableList<Message>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.conversation)
+        normalizeFont(this, conversation_container)
+
         val friendsName = intent.getStringExtra(FRIENDS_NAME)
         val friendsLogin = intent.getStringExtra(FRIENDS_LOGIN)!!
+        messageList = db.makeMessageList(friendsLogin)
+
+        val messageAdapter = MessageAdapter(applicationContext, messageList!!)
+
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                addNewMessagesToUI(applicationContext, dialog_content, friendsLogin)
+                messageList = db.makeMessageList(friendsLogin)
+                messageAdapter.notifyDataSetChanged()
             }
         }
         registerReceiver(broadcastReceiver, IntentFilter(UPDATE_VIEW_CONVERSATION_ACTION))
@@ -49,9 +57,7 @@ class Conversation: AppCompatActivity(), Normalizable {
             cipher.init(Cipher.ENCRYPT_MODE, publicKey)
         }
         title = friendsName
-        setContentView(R.layout.conversation)
-        addAllMessagesFromStorage(this, friendsLogin, dialog_content)
-        normalizeFont(this, conversation_container)
+
         message_input.setOnEditorActionListener { _, actionId, _ ->
             if ((actionId == EditorInfo.IME_ACTION_DONE) && (publicKey != null)) {
                 val messageText = message_input.text.toString().trim()
@@ -64,7 +70,8 @@ class Conversation: AppCompatActivity(), Normalizable {
                         result = registrationLogic.sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
                     }.join()
                     if (result) {
-                        addAMessageToUI(this, messageText, dialog_content, 0)
+                        messageList = db.makeMessageList(friendsLogin)
+                        messageAdapter.notifyDataSetChanged()
                         db.saveMessage(friendsLogin, messageText)
                     } else {
                         Toast.makeText(applicationContext, MESSAGE_NOT_SENT_PHRASE, Toast.LENGTH_LONG).show()

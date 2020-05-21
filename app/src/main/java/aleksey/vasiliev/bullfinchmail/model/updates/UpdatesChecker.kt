@@ -1,5 +1,6 @@
 package aleksey.vasiliev.bullfinchmail.model.updates
 
+import androidx.annotation.RequiresApi
 import aleksey.vasiliev.bullfinchmail.R
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 import android.app.NotificationChannel
@@ -9,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import java.util.Timer

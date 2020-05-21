@@ -13,6 +13,8 @@ import javax.crypto.Cipher
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import aleksey.vasiliev.bullfinchmail.model.specific.Dialog
+import aleksey.vasiliev.bullfinchmail.model.specific.Message
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.AUTHORISED
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DATE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
@@ -39,17 +41,31 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.RIGHT_GRAVITY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.USERNAME
 
 class DataBase {
+    fun makeMessageList(login: String): MutableList<Message> {
+        val result = mutableListOf<Message>()
+        with(File("$MAIN_DIR/$login/$MESSAGES")) {
+            val list = list()
+            list?.reversed()?.forEach {
+                with(File("$MAIN_DIR/$login/$MESSAGES/$it")) {
+                    val content = JSONObject(this.readText(DEFAULT_CHARSET))
+                    result.add(Message(content.getString(DATE), content.getString(MESSAGE), content.getInt(GRAVITY)))
+                }
+            }
+        }
+        return result
+    }
+
     fun saveKey(friendsLogin: String, passwordType: String, key: ByteArray) {
-        with(File("${MAIN_DIR}/$friendsLogin/$MESSAGES")) {
+        with(File("$MAIN_DIR/$friendsLogin/$MESSAGES")) {
             mkdirs()
         }
-        with(File("${MAIN_DIR}/$friendsLogin/$passwordType$JSON_FORMAT")) {
+        with(File("$MAIN_DIR/$friendsLogin/$passwordType$JSON_FORMAT")) {
             if (!this.exists()) createNewFile()
             writeText(createJSONKey(key, passwordType), DEFAULT_CHARSET)
         }
     }
 
-    fun makeMessageNumber(login: String): Int {
+    private fun makeMessageNumber(login: String): Int {
         with(File("$MAIN_DIR/$login/$MESSAGES")) {
             val messages = list()
             return if ((messages != null) && (messages.isNotEmpty())) {
@@ -62,7 +78,7 @@ class DataBase {
     }
 
     fun createKeyFromJSON(login: String, keyType: String): Key? {
-        with(File("${MAIN_DIR}/$login/$keyType$JSON_FORMAT")) {
+        with(File("$MAIN_DIR/$login/$keyType$JSON_FORMAT")) {
             if (!this.exists()) return null
             val jsonObject = JSONObject(readText(DEFAULT_CHARSET))
             val jsonArray = jsonObject.getJSONArray(keyType)
@@ -89,7 +105,7 @@ class DataBase {
     }
 
     fun saveExtras(friendsLogin: String, friendsUsername: String) {
-        with (File("${MAIN_DIR}/$friendsLogin/$EXTRAS$JSON_FORMAT")) {
+        with (File("$MAIN_DIR/$friendsLogin/$EXTRAS$JSON_FORMAT")) {
             if (!exists()) createNewFile()
             val jsonObject = JSONObject()
             jsonObject.put(FRIENDS_USERNAME, friendsUsername)
@@ -102,7 +118,7 @@ class DataBase {
         jsonObject.put(GRAVITY, RIGHT_GRAVITY)
         jsonObject.put(DATE, todaysDate())
         jsonObject.put(MESSAGE, message)
-        with(File("${MAIN_DIR}/$login/$MESSAGES/${makeMessageNumber(login)}")) {
+        with(File("$MAIN_DIR/$login/$MESSAGES/${makeMessageNumber(login)}")) {
             createNewFile()
             writeText(jsonObject.toString(), DEFAULT_CHARSET)
         }
@@ -116,7 +132,7 @@ class DataBase {
         decipher.init(Cipher.DECRYPT_MODE, key)
         jsonObject.put(DATE, decipher.doFinal(date).makeString())
         jsonObject.put(MESSAGE, decipher.doFinal(message).makeString())
-        with(File("${MAIN_DIR}/$login/$MESSAGES/${makeMessageNumber(login)}")) {
+        with(File("$MAIN_DIR/$login/$MESSAGES/${makeMessageNumber(login)}")) {
             createNewFile()
             writeText(jsonObject.toString(), DEFAULT_CHARSET)
         }
@@ -138,5 +154,16 @@ class DataBase {
             putString(USERNAME, userName)
             commit()
         }
+    }
+
+    fun makeUserNameList(): MutableList<Dialog> {
+        val result = mutableListOf<Dialog>()
+        with(File(MAIN_DIR)) {
+            val list = list()
+            list?.forEach {
+                result.add(Dialog(it))
+            }
+        }
+        return result
     }
 }

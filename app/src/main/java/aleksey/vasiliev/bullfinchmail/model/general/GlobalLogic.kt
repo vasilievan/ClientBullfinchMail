@@ -12,14 +12,16 @@ import java.io.OutputStream
 import java.net.Socket
 import java.security.SecureRandom
 import java.util.Calendar
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.APP_BUFFER_SIZE
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.APP_BUFFER_SIZE
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.DEFAULT_CHARSET
 
 object GlobalLogic {
     val secureRandom = SecureRandom()
+
+    fun userNameValue(context: Context): String? = getSharedPreferences(context).getString(Constants.USERNAME, null)
 
     fun getSharedPreferences(context: Context): SharedPreferences {
         val masterKeyAlias = MasterKeys.getOrCreate(Constants.ENCYPTED_SP_KEY_SPECIFICATION)

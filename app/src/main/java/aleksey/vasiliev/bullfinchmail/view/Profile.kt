@@ -2,11 +2,7 @@ package aleksey.vasiliev.bullfinchmail.view
 
 import aleksey.vasiliev.bullfinchmail.R
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
-import aleksey.vasiliev.bullfinchmail.model.specific.FriendsFindingLogic.makeConversationView
-import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addConversationsToLayout
-import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.addNewConversationsToLayout
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.createDialog
-import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.userNameValue
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic.Companion.loginIsIncorrect
 import aleksey.vasiliev.bullfinchmail.model.updates.UpdatesChecker
 import android.content.BroadcastReceiver
@@ -20,30 +16,37 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.profile.*
 import kotlin.concurrent.thread
+import aleksey.vasiliev.bullfinchmail.model.general.DataBase
+import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.userNameValue
+import aleksey.vasiliev.bullfinchmail.model.specific.DialogAdapter
+import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_SENT_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_WARNING_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
-import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 
 class Profile : AppCompatActivity(), Normalizable {
-    var broadcastReceiver: BroadcastReceiver? = null
+    private val db = DataBase()
+    private val nameList = db.makeUserNameList()
+    private var broadcastReceiver: BroadcastReceiver? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.profile)
+        val dialogAdapter = DialogAdapter(applicationContext, nameList)
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                addNewConversationsToLayout(applicationContext, container_for_conversations)
+                dialogAdapter.notifyDataSetChanged()
             }
         }
-        registerReceiver(broadcastReceiver, IntentFilter(UPDATE_VIEW_ACTION))
-        addConversationsToLayout(this, container_for_conversations)
-        normalizeFont(this, profile_container)
-        startService(Intent(this, UpdatesChecker::class.java))
         profile_username.text = userNameValue(this)
         profile_username.setOnLongClickListener {
             createDialog(this, it as TextView)
             true
         }
+        normalizeFont(this, profile_container)
+        registerReceiver(broadcastReceiver, IntentFilter(UPDATE_VIEW_ACTION))
+        profile_friend_list.adapter = dialogAdapter
+        startService(Intent(this, UpdatesChecker::class.java))
         find_user.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val userName = find_user.text.toString()
@@ -55,7 +58,7 @@ class Profile : AppCompatActivity(), Normalizable {
                         result = registrationLogic.makeFriends(applicationContext, userName)
                     }.join()
                     if (result) {
-                        container_for_conversations.addView(makeConversationView(applicationContext, userName))
+                        dialogAdapter.notifyDataSetChanged()
                         Toast.makeText(applicationContext, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
                     } else {
                         Toast.makeText(applicationContext, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
