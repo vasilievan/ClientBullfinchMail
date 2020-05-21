@@ -1,5 +1,7 @@
 package aleksey.vasiliev.bullfinchmail.view
 
+import android.annotation.SuppressLint
+import android.os.AsyncTask
 import aleksey.vasiliev.bullfinchmail.R
 import aleksey.vasiliev.bullfinchmail.model.general.DataBase
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.makeByteArray
@@ -16,7 +18,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.conversation.*
 import javax.crypto.Cipher
-import kotlin.concurrent.thread
 import aleksey.vasiliev.bullfinchmail.model.specific.Message
 import aleksey.vasiliev.bullfinchmail.model.specific.MessageAdapter
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
@@ -64,19 +65,29 @@ class Conversation: AppCompatActivity(), Normalizable {
                 if (messageTextIsCorrect(messageText)) {
                     val cipheredMessage = cipher.doFinal(messageText.makeByteArray())
                     val cipheredDate = cipher.doFinal(todaysDate().makeByteArray())
-                    var result = false
-                    thread {
-                        val registrationLogic = RegistrationLogic()
-                        result = registrationLogic.sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
-                    }.join()
-                    if (result) {
-                        db.updateMessageList(friendsLogin, messageList!!)
-                        messageAdapter.notifyDataSetChanged()
-                        db.saveMessage(friendsLogin, messageText)
-                    } else {
-                        Toast.makeText(applicationContext, MESSAGE_NOT_SENT_PHRASE, Toast.LENGTH_LONG).show()
+                    @SuppressLint("StaticFieldLeak")
+                    val doTask = object: AsyncTask<Unit, Unit, Unit>() {
+                        var success = false
+                        override fun doInBackground(vararg params: Unit) {
+                            val registrationLogic = RegistrationLogic()
+                            if (registrationLogic.exchangeKeysWithServer())  {
+                                success = registrationLogic.sendMessageGlobally(applicationContext, friendsLogin, cipheredMessage, cipheredDate)
+                            } else {
+                                registrationLogic.closeClientSocket()
+                            }
+                        }
+                        override fun onPostExecute(result: Unit) {
+                            if (success) {
+                                db.updateMessageList(friendsLogin, messageList!!)
+                                messageAdapter.notifyDataSetChanged()
+                                db.saveMessage(friendsLogin, messageText)
+                                message_input.text.clear()
+                            } else {
+                                Toast.makeText(applicationContext, MESSAGE_NOT_SENT_PHRASE, Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
-                    message_input.text.clear()
+                    doTask.execute()
                 }
             } else {
                 message_input.text.clear()

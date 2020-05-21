@@ -55,11 +55,9 @@ object GlobalLogic {
             (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)){
             ActivityCompat.requestPermissions(activity, arrayOf(
                 Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), generateRequestCode())
+                Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 31415)
         }
     }
-
-    private fun generateRequestCode(): Int = (0..65535).random()
 
     fun closeClientSocket(writer: OutputStream?, clientSocket: Socket?) {
         writer?.close()

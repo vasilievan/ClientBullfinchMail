@@ -1,5 +1,6 @@
 package aleksey.vasiliev.bullfinchmail.view
 
+import android.annotation.SuppressLint
 import aleksey.vasiliev.bullfinchmail.R
 import aleksey.vasiliev.bullfinchmail.model.general.Normalizable
 import aleksey.vasiliev.bullfinchmail.model.specific.ProfileLogic.createDialog
@@ -15,11 +16,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.profile.*
-import kotlin.concurrent.thread
 import aleksey.vasiliev.bullfinchmail.model.general.DataBase
 import aleksey.vasiliev.bullfinchmail.model.general.GlobalLogic.userNameValue
 import aleksey.vasiliev.bullfinchmail.model.specific.DialogAdapter
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
+import android.os.AsyncTask
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_SENT_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.REQUEST_WARNING_PHRASE
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
@@ -53,18 +54,28 @@ class Profile : AppCompatActivity(), Normalizable {
                 val userName = find_user.text.toString()
                 find_user.text.clear()
                 if (!loginIsIncorrect(userName)) {
-                    var result = false
-                    thread {
-                        val registrationLogic = RegistrationLogic()
-                        result = registrationLogic.makeFriends(applicationContext, userName)
-                    }.join()
-                    if (result) {
-                        db.updateUserNameList(nameList)
-                        dialogAdapter.notifyDataSetChanged()
-                        Toast.makeText(applicationContext, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(applicationContext, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
+                    @SuppressLint("StaticFieldLeak")
+                    val doTask = object: AsyncTask<Unit, Unit, Unit>() {
+                        var success = false
+                        override fun doInBackground(vararg params: Unit) {
+                            val registrationLogic = RegistrationLogic()
+                            if (registrationLogic.exchangeKeysWithServer())  {
+                                success = registrationLogic.makeFriends(applicationContext, userName)
+                            } else {
+                                registrationLogic.closeClientSocket()
+                            }
+                        }
+                        override fun onPostExecute(result: Unit) {
+                            if (success) {
+                                db.updateUserNameList(nameList)
+                                dialogAdapter.notifyDataSetChanged()
+                                Toast.makeText(applicationContext, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(applicationContext, REQUEST_WARNING_PHRASE, Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
+                    doTask.execute()
                 }
             }
             true

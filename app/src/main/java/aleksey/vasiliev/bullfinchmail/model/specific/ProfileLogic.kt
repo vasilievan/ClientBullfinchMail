@@ -25,13 +25,18 @@ object ProfileLogic {
                 val userName = newUserName.text.toString()
                 if (!userNameIsCorrect(context, userName)) return
                 val registrationLogic = RegistrationLogic()
-                if(registrationLogic.changeUserNameGlobally(context, userName)) {
-                    textView.text = userName
-                    with(getSharedPreferences(context).edit()) {
-                        putString(USERNAME, userName)
-                        commit()
+                val exchanged = registrationLogic.exchangeKeysWithServer()
+                if (exchanged) {
+                    if(registrationLogic.changeUserNameGlobally(context, userName)) {
+                        textView.text = userName
+                        with(getSharedPreferences(context).edit()) {
+                            putString(USERNAME, userName)
+                            commit()
+                        }
+                        success = true
                     }
-                    success = true
+                } else {
+                    registrationLogic.closeClientSocket()
                 }
             }
         ))

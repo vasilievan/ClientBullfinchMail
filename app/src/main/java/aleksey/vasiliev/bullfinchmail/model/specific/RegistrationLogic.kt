@@ -97,18 +97,11 @@ class RegistrationLogic {
         if (!checkIfConnectionIsAvailable(context)) {
             return false
         }
-        val exchanged = exchangeKeysWithServer()
-        if (!exchanged) {
-            closeClientSocket()
-            return false
-        }
         return sendMessage(context, receiver, messageText, cipheredDate)
     }
 
     fun changeUserNameGlobally(context: Context, userName: String): Boolean {
         if (!checkIfConnectionIsAvailable(context)) return false
-        val exchanged = exchangeKeysWithServer()
-        if (!exchanged) return false
         return changeUserName(context, userName)
     }
 
@@ -121,10 +114,7 @@ class RegistrationLogic {
             val alreadyBefriended = list() ?: Array(0){""}
             if (userName in alreadyBefriended) return false
             val password = sharedPreferences.getString(PASSWORD, null)
-            val registrationLogic = RegistrationLogic()
-            val exchanged = registrationLogic.exchangeKeysWithServer()
-            if (!exchanged) return false
-            return registrationLogic.sendRequest(login!!, password!!, userName)
+            return sendRequest(login!!, password!!, userName)
         }
     }
 
@@ -146,7 +136,7 @@ class RegistrationLogic {
         return true
     }
 
-    private fun closeClientSocket() {
+    fun closeClientSocket() {
         if (clientSocket != null) {
             writer!!.close()
             clientSocket!!.close()
