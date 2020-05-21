@@ -35,6 +35,7 @@ class Profile : AppCompatActivity(), Normalizable {
         val dialogAdapter = DialogAdapter(applicationContext, nameList)
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                db.updateUserNameList(nameList)
                 dialogAdapter.notifyDataSetChanged()
             }
         }
@@ -58,6 +59,7 @@ class Profile : AppCompatActivity(), Normalizable {
                         result = registrationLogic.makeFriends(applicationContext, userName)
                     }.join()
                     if (result) {
+                        db.updateUserNameList(nameList)
                         dialogAdapter.notifyDataSetChanged()
                         Toast.makeText(applicationContext, REQUEST_SENT_PHRASE, Toast.LENGTH_LONG).show()
                     } else {

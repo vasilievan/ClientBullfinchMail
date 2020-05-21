@@ -45,15 +45,31 @@ class DataBase {
         val result = mutableListOf<Message>()
         with(File("$MAIN_DIR/$login/$MESSAGES")) {
             val list = list()
-            list?.reversed()?.forEach {
+            list?.sortedByDescending{ it.toInt() }?.forEach {
                 with(File("$MAIN_DIR/$login/$MESSAGES/$it")) {
                     val content = JSONObject(this.readText(DEFAULT_CHARSET))
-                    result.add(Message(content.getString(DATE), content.getString(MESSAGE), content.getInt(GRAVITY)))
+                    result.add(createMessageFromJSON(content))
                 }
             }
         }
         return result
     }
+
+    fun updateMessageList(login: String, messageList: MutableList<Message>) {
+        with(File("$MAIN_DIR/$login/$MESSAGES")) {
+            val list = list()
+            if (list != null && list.isNotEmpty()) {
+                for (element in messageList.size until list.size) {
+                    with (File("$MAIN_DIR/$login/$MESSAGES/$element")) {
+                        val content = JSONObject(this.readText(DEFAULT_CHARSET))
+                        messageList.add(0, createMessageFromJSON(content))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun createMessageFromJSON(content: JSONObject): Message = Message(content.getString(DATE), content.getString(MESSAGE), content.getInt(GRAVITY))
 
     fun saveKey(friendsLogin: String, passwordType: String, key: ByteArray) {
         with(File("$MAIN_DIR/$friendsLogin/$MESSAGES")) {
@@ -165,5 +181,15 @@ class DataBase {
             }
         }
         return result
+    }
+
+    fun updateUserNameList(userNameList: MutableList<Dialog>) {
+        with(File(MAIN_DIR)) {
+            val list = list()
+            list?.forEach {
+                val newDialog = Dialog(it)
+                if (newDialog !in userNameList) userNameList.add(newDialog)
+            }
+        }
     }
 }

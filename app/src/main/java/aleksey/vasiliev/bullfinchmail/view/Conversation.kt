@@ -46,7 +46,7 @@ class Conversation: AppCompatActivity(), Normalizable {
 
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                messageList = db.makeMessageList(friendsLogin)
+                db.updateMessageList(friendsLogin, messageList!!)
                 messageAdapter.notifyDataSetChanged()
             }
         }
@@ -70,7 +70,7 @@ class Conversation: AppCompatActivity(), Normalizable {
                         result = registrationLogic.sendMessageGlobally(this, friendsLogin, cipheredMessage, cipheredDate)
                     }.join()
                     if (result) {
-                        messageList = db.makeMessageList(friendsLogin)
+                        db.updateMessageList(friendsLogin, messageList!!)
                         messageAdapter.notifyDataSetChanged()
                         db.saveMessage(friendsLogin, messageText)
                     } else {
