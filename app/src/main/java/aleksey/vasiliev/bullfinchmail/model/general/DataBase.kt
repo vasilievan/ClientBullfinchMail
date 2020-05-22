@@ -22,7 +22,6 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.ENCRYPTED_SP_KEY_S
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.ENCRYPTED_SP_NAME
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.ENCRYPTED_SP_VALUE_SCHEME
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.ENCYPTED_SP_KEY_SPECIFICATION
-import aleksey.vasiliev.bullfinchmail.model.general.Constants.EXTENDED_KEY_LENGTH
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.EXTRAS
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.FRIENDS_USERNAME
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.GRAVITY
@@ -98,7 +97,7 @@ class DataBase {
             if (!this.exists()) return null
             val jsonObject = JSONObject(readText(DEFAULT_CHARSET))
             val jsonArray = jsonObject.getJSONArray(keyType)
-            val byteArray = ByteArray(EXTENDED_KEY_LENGTH)
+            val byteArray = ByteArray(jsonArray.length())
             for (i in 0 until jsonArray.length()) {
                 byteArray[i] = jsonArray.getString(i).toByte()
             }

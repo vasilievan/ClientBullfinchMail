@@ -6,7 +6,8 @@ import androidx.security.crypto.MasterKeys
 
 object Constants {
     private val ROOT_DIR = Environment.getExternalStorageDirectory()
-    val MAIN_DIR = "$ROOT_DIR/BullfinchMail"
+    val APP_NAME = "BullfinchMail"
+    val MAIN_DIR = "$ROOT_DIR/$APP_NAME"
     const val SERVER_IP = "simsim.ftp.sh"
     val POSSIBLE_PORTS = setOf(4051, 4052, 4053, 4054, 4055, 4056, 4057, 4058, 4059)
     val DEFAULT_CHARSET = Charsets.UTF_8

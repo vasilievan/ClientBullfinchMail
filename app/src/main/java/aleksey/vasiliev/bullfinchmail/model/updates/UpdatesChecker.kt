@@ -2,6 +2,7 @@ package aleksey.vasiliev.bullfinchmail.model.updates
 
 import androidx.annotation.RequiresApi
 import aleksey.vasiliev.bullfinchmail.R
+import aleksey.vasiliev.bullfinchmail.model.general.Constants.APP_NAME
 import aleksey.vasiliev.bullfinchmail.model.specific.RegistrationLogic
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,6 +18,8 @@ import java.util.TimerTask
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_ACTION
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.UPDATE_VIEW_CONVERSATION_ACTION
 import aleksey.vasiliev.bullfinchmail.model.general.ProtocolPhrases.UPDATE_PHRASE
+import android.annotation.SuppressLint
+import android.os.AsyncTask
 
 class UpdatesChecker: Service() {
     override fun onBind(intent: Intent?): IBinder? = null
@@ -24,18 +27,29 @@ class UpdatesChecker: Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timer().schedule(object : TimerTask() {
             override fun run() {
-                var updates = false
-                val registrationLogic = RegistrationLogic()
-                val isEverythingFine = registrationLogic.exchangeKeysWithServer()
-                if (isEverythingFine) updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
-                if (updates) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        createNotificationChannel()
+                @SuppressLint("StaticFieldLeak")
+                val doTask = object: AsyncTask<Unit, Unit, Unit>() {
+                    var updates = false
+                    override fun doInBackground(vararg params: Unit) {
+                        val registrationLogic = RegistrationLogic()
+                        if (registrationLogic.exchangeKeysWithServer())  {
+                            updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
+                        } else {
+                            registrationLogic.closeClientSocket()
+                        }
                     }
-                    notifyDearUser(UPDATE_PHRASE)
-                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_ACTION))
-                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_CONVERSATION_ACTION))
+                    override fun onPostExecute(result: Unit) {
+                        if (updates) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                createNotificationChannel()
+                            }
+                            notifyDearUser(UPDATE_PHRASE)
+                            applicationContext.sendBroadcast(Intent(UPDATE_VIEW_ACTION))
+                            applicationContext.sendBroadcast(Intent(UPDATE_VIEW_CONVERSATION_ACTION))
+                        }
+                    }
                 }
+                doTask.execute()
             }
         }, 0, 5000)
         return super.onStartCommand(intent, flags, startId)
@@ -55,7 +69,7 @@ class UpdatesChecker: Service() {
     private fun notifyDearUser(str: String) {
         val builder = NotificationCompat.Builder(this, getString(R.string.app_name))
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(R.string.app_name.toString())
+            .setContentTitle(APP_NAME)
             .setContentText(str)
             .setStyle(NotificationCompat.BigTextStyle())
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
