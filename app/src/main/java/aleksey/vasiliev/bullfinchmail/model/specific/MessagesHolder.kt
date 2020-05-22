@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.FONT_NAME
+import android.widget.LinearLayout
 
 class MessagesHolder(val context: Context, inflater: LayoutInflater, parent: ViewGroup): RecyclerView.ViewHolder(inflater.inflate(
     R.layout.message_pattern, parent, false)) {
@@ -22,13 +23,18 @@ class MessagesHolder(val context: Context, inflater: LayoutInflater, parent: Vie
         } else {
             Gravity.START
         }
+
+        val layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        layoutParams.gravity = messageGravity
+        layoutParams.setMargins(25, 0,  25, 25)
+
         val typeface = Typeface.createFromAsset(context.assets, FONT_NAME)
         date.text = message.date
-        date.gravity = messageGravity
+        date.layoutParams = layoutParams
         date.typeface = typeface
 
         messageContent.text = transformTextForAMessage(message.content)
-        messageContent.gravity = messageGravity
+        messageContent.layoutParams = layoutParams
         messageContent.typeface = typeface
     }
 }

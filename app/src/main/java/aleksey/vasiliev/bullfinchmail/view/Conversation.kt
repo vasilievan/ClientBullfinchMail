@@ -44,6 +44,7 @@ class Conversation: AppCompatActivity(), Normalizable {
         messageList = db.makeMessageList(friendsLogin)
 
         val messageAdapter = MessageAdapter(applicationContext, messageList!!)
+        messages_list.adapter = messageAdapter
 
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
