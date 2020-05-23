@@ -68,7 +68,7 @@ class DataBase {
         }
     }
 
-    private fun createMessageFromJSON(content: JSONObject): Message = Message(content.getString(DATE), content.getString(MESSAGE), content.getInt(GRAVITY))
+    fun createMessageFromJSON(content: JSONObject): Message = Message(content.getString(DATE), content.getString(MESSAGE), content.getInt(GRAVITY))
 
     fun saveKey(friendsLogin: String, passwordType: String, key: ByteArray) {
         with(File("$MAIN_DIR/$friendsLogin/$MESSAGES")) {
@@ -109,7 +109,7 @@ class DataBase {
         }
     }
 
-    private fun createJSONKey(key: ByteArray, passwordType: String): String {
+    fun createJSONKey(key: ByteArray, passwordType: String): String {
         val jsonObject = JSONObject()
         val jsonArray = JSONArray()
         for (element in key) {
