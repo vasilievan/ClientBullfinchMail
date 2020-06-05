@@ -27,29 +27,21 @@ class UpdatesChecker: Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timer().schedule(object : TimerTask() {
             override fun run() {
-                @SuppressLint("StaticFieldLeak")
-                val doTask = object: AsyncTask<Unit, Unit, Unit>() {
-                    var updates = false
-                    override fun doInBackground(vararg params: Unit) {
-                        val registrationLogic = RegistrationLogic()
-                        if (registrationLogic.exchangeKeysWithServer())  {
-                            updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
-                        } else {
-                            registrationLogic.closeClientSocket()
-                        }
-                    }
-                    override fun onPostExecute(result: Unit) {
-                        if (updates) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                createNotificationChannel()
-                            }
-                            notifyDearUser(UPDATE_PHRASE)
-                            applicationContext.sendBroadcast(Intent(UPDATE_VIEW_ACTION))
-                            applicationContext.sendBroadcast(Intent(UPDATE_VIEW_CONVERSATION_ACTION))
-                        }
-                    }
+                var updates = false
+                val registrationLogic = RegistrationLogic()
+                if (registrationLogic.exchangeKeysWithServer())  {
+                    updates = registrationLogic.checkForFriendRequestsAndNewMessages(applicationContext)
+                } else {
+                    registrationLogic.closeClientSocket()
                 }
-                doTask.execute()
+                if (updates) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        createNotificationChannel()
+                    }
+                    notifyDearUser(UPDATE_PHRASE)
+                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_ACTION))
+                    applicationContext.sendBroadcast(Intent(UPDATE_VIEW_CONVERSATION_ACTION))
+                }
             }
         }, 0, 5000)
         return super.onStartCommand(intent, flags, startId)
