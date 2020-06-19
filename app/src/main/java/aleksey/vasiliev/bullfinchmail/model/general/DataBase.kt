@@ -40,18 +40,16 @@ import aleksey.vasiliev.bullfinchmail.model.general.Constants.RIGHT_GRAVITY
 import aleksey.vasiliev.bullfinchmail.model.general.Constants.USERNAME
 
 class DataBase {
-    fun makeMessageList(login: String): MutableList<Message> {
-        val result = mutableListOf<Message>()
+    fun makeMessageList(login: String, messageList: MutableList<Message>) {
         with(File("$MAIN_DIR/$login/$MESSAGES")) {
             val list = list()
             list?.sortedByDescending{ it.toInt() }?.forEach {
                 with(File("$MAIN_DIR/$login/$MESSAGES/$it")) {
                     val content = JSONObject(this.readText(DEFAULT_CHARSET))
-                    result.add(createMessageFromJSON(content))
+                    messageList.add(createMessageFromJSON(content))
                 }
             }
         }
-        return result
     }
 
     fun updateMessageList(login: String, messageList: MutableList<Message>) {
