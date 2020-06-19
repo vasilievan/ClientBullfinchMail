@@ -236,8 +236,8 @@ class RegistrationLogic {
             val friendsKey = readNext(clientSocket)
             db.saveKey(friendsLogin, PUBLIC_KEY, friendsKey)
             db.saveExtras(friendsLogin, friendsUsername)
-            with(File("$MAIN_DIR/$friendsLogin/$PUBLIC_KEY$JSON_FORMAT")) {
-                if (!exists() || !File("$MAIN_DIR/$friendsLogin/$PRIVATE_KEY$JSON_FORMAT").exists()) {
+            with(File("$MAIN_DIR/$friendsLogin/$PRIVATE_KEY$JSON_FORMAT")) {
+                if (!exists()) {
                     val currentUserKeyPair = keyPairGenerator.genKeyPair()
                     db.saveKey(friendsLogin, PRIVATE_KEY, currentUserKeyPair.private.encoded)
                     sendSomethingToServer(writer, currentUserKeyPair.public.encoded)
