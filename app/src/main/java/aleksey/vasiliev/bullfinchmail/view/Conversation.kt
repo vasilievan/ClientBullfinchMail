@@ -32,7 +32,7 @@ class Conversation: AppCompatActivity(), Normalizable {
     private var broadcastReceiver: BroadcastReceiver? = null
     private val cipher: Cipher =  Cipher.getInstance(KEY_TRANSFORMATION)
     private val db = DataBase()
-    private var messageList: MutableList<Message>? = null
+    private val messageList: MutableList<Message> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,14 +41,14 @@ class Conversation: AppCompatActivity(), Normalizable {
 
         val friendsName = intent.getStringExtra(FRIENDS_NAME)
         val friendsLogin = intent.getStringExtra(FRIENDS_LOGIN)!!
-        messageList = db.makeMessageList(friendsLogin)
+        db.makeMessageList(friendsLogin)
 
         val messageAdapter = MessageAdapter(applicationContext, messageList!!)
         messages_list.adapter = messageAdapter
 
         broadcastReceiver = object: BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                db.updateMessageList(friendsLogin, messageList!!)
+                db.updateMessageList(friendsLogin, messageList)
                 messageAdapter.notifyDataSetChanged()
             }
         }
@@ -79,10 +79,10 @@ class Conversation: AppCompatActivity(), Normalizable {
                         }
                         override fun onPostExecute(result: Unit) {
                             if (success) {
-                                db.updateMessageList(friendsLogin, messageList!!)
-                                messageAdapter.notifyDataSetChanged()
-                                db.saveMessage(friendsLogin, messageText)
                                 message_input.text.clear()
+                                db.saveMessage(friendsLogin, messageText)
+                                db.updateMessageList(friendsLogin, messageList)
+                                messageAdapter.notifyDataSetChanged()
                             } else {
                                 Toast.makeText(applicationContext, MESSAGE_NOT_SENT_PHRASE, Toast.LENGTH_LONG).show()
                             }
