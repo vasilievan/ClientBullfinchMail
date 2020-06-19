@@ -41,7 +41,7 @@ class Conversation: AppCompatActivity(), Normalizable {
 
         val friendsName = intent.getStringExtra(FRIENDS_NAME)
         val friendsLogin = intent.getStringExtra(FRIENDS_LOGIN)!!
-        db.makeMessageList(friendsLogin)
+        db.makeMessageList(friendsLogin, messageList)
 
         val messageAdapter = MessageAdapter(applicationContext, messageList!!)
         messages_list.adapter = messageAdapter
